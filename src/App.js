@@ -41,38 +41,67 @@ const App = () => {
   }, []);
 
   return (
+    // <BrowserRouter>
+    //   <Routes>
+    //     <Route path="/dashboard" element={<DashboardScreen />} />
+
+    //     <Route path="/" element={<InvoiceDetailScreen />} />
+
+    //     <Route path="/login" element={<Testscreen />} />
+
+    //     <Route path="/forgetPassword" element={<ForgetPassword />} />
+
+    //     <Route path="/otpScreen" element={<OtpScreen />} />
+
+    //     <Route path="/changePasswordScreen" element={<ChangePasswordScreen />} />
+
+    //     <Route path="/register" element={<RegisterScreen />} />
+
+    //     <Route path="clients" element={<ClientListScreen />}></Route>
+
+    //     <Route path="products" element={<ProductListScreen />}></Route>
+
+    //     {/* <Route path="invoices"> */}
+    //     <Route path="" element={<InvoiceListScreen />} exact />
+    //     <Route path=":id" element={<InvoiceDetailScreen />} />
+    //     {/* </Route> */}
+
+    //     <Route path="about" element={<AboutScreen />} />
+
+    //     {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
+    //   </Routes>
+
+    //   <ToastContainer />
+    //   <ClientDeleteConfirm />
+    //   <ClientEditModal />
+    //   <ClientChooseModal />
+    //   <ProductDeleteConfirm />
+    //   <ProductEditModal />
+    //   <ProductChoosenModal />
+    //   <InvoiceSettingModal />
+    //   <InvoiceConfirmModal />
+    //   <InvoiceDeleteConfirm />
+    //   <PageLoading />
+    // </BrowserRouter>
     <BrowserRouter>
-
-
-         <Routes>
-          <Route path="/dashboard" element={<DashboardScreen />} />
-
-          <Route path="/" element={<InvoiceDetailScreen />} />
-
-          <Route path="/login" element={<Testscreen />} />
-
-          <Route path="/forgetPassword" element={<ForgetPassword />} />
-
-          <Route path="/otpScreen" element={<OtpScreen />} />
-
-          <Route path="/changePasswordScreen" element={<ChangePasswordScreen />} />
-
-          <Route path="/register" element={<RegisterScreen />} />
-
+      <Container>
+        <Routes>
+          <Route path="/" element={<DashboardScreen />} />
           <Route path="clients" element={<ClientListScreen />}></Route>
-
           <Route path="products" element={<ProductListScreen />}></Route>
-
-          {/* <Route path="invoices"> */}
+          <Route path="invoices">
             <Route path="" element={<InvoiceListScreen />} exact />
             <Route path=":id" element={<InvoiceDetailScreen />} />
-          {/* </Route> */}
-
+          </Route>
           <Route path="about" element={<AboutScreen />} />
-
-          {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="/login" element={<Testscreen />} />
+          <Route path="/forgetPassword" element={<ForgetPassword />} />
+          <Route path="/otpScreen" element={<OtpScreen />} />
+          <Route path="/changePasswordScreen" element={<ChangePasswordScreen />} />
+          <Route path="/register" element={<RegisterScreen />} />
         </Routes>
-      
+      </Container>
       <ToastContainer />
       <ClientDeleteConfirm />
       <ClientEditModal />
