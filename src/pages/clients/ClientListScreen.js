@@ -6,7 +6,7 @@ import Container from "../../components/Container/Container";
 
 function ClientListScreen() {
   return (
-    <Container>
+    // <Container>
     <div>
       <div className="p-4">
         <PageTitle title="Clients" />
@@ -21,7 +21,7 @@ function ClientListScreen() {
         </div>
       </div>
     </div>
-    </Container>
+    // </Container>
 
   );
 }

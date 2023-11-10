@@ -9,7 +9,7 @@ function InvoiceListScreen() {
   const navigate = useNavigate();
 
   const goToNewInvoice = useCallback(() => {
-    // navigate("/invoices/new");
+    navigate("/invoices/new");
   }, [navigate]);
 
   return (

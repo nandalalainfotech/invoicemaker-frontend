@@ -91,6 +91,9 @@ function InvoiceDetailScreen(props) {
 
   const [invoiceForm, setInvoiceForm] = useState(null);
 
+
+  console.log('invoiceForm------------>>>', invoiceForm);
+
   console.log("invoiceForm", invoiceForm);
   const [isViewMode, setIsViewMode] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -382,7 +385,9 @@ function InvoiceDetailScreen(props) {
   }, [invoiceForm]);
 
   const addPercentageTax = useCallback(() => {
-    const isSomeTaxes = invoiceForm.taxes.some(
+    const isSomeTaxes = invoiceForm?.taxes?.some(
+
+      console.log('isSomeTaxes--------->>>', isSomeTaxes),
       (form) => form.type === "percentage"
     );
 
@@ -468,15 +473,15 @@ function InvoiceDetailScreen(props) {
     e.preventDefault();
 
     const invoiceDetail = {
-      clientName : invoiceForm.clientDetail.name,
+      clientName: invoiceForm.clientDetail.name,
       clientAddress: invoiceForm.clientDetail.billingAddress,
-      clientEmail : invoiceForm.clientDetail.email,
+      clientEmail: invoiceForm.clientDetail.email,
       clientMobileNo: invoiceForm.clientDetail.mobileNo,
-      invoiceNo : invoiceForm.invoiceNo,
-      createdDate : invoiceForm.createdDate,
-      dueDate : invoiceForm.dueDate,
-      products : invoiceForm.products,
-      subTotal : invoiceForm.totalAmount
+      invoiceNo: invoiceForm.invoiceNo,
+      createdDate: invoiceForm.createdDate,
+      dueDate: invoiceForm.dueDate,
+      products: invoiceForm.products,
+      subTotal: invoiceForm.totalAmount
 
     }
     try {
@@ -645,10 +650,9 @@ function InvoiceDetailScreen(props) {
 
   return (
 
-    <Container>
-<div>
+    <div>
       <div className="p-4">
-        {/* <PageTitle
+        <PageTitle
           title={
             <>
               {params.id === "new"
@@ -656,17 +660,17 @@ function InvoiceDetailScreen(props) {
                 : `Invoice Detail ${invoiceForm?.statusName}`}
             </>
           }
-        /> */}
+        />
       </div>
       <div className="px-4 pb-3">
-        {/* <InvoiceTopBar
+        <InvoiceTopBar
           onClickBack={goInvoiceList}
           viewMode={isViewMode}
           onClickViewAs={toggleViewMode}
           onClickSetting={openSettingModal}
           onClickExport={handleExport}
           onClickDownloadImg={handleDownloadImg}
-        /> */}
+        />
       </div>
 
       {invoiceForm && (
@@ -1108,9 +1112,9 @@ function InvoiceDetailScreen(props) {
                         Number.isInteger(product.quantity * product.amount)
                           ? product.quantity * product.amount
                           : (product.quantity * product.amount)
-                              .toFixed(4)
-                              .toString()
-                              .slice(0, -2)
+                            .toFixed(4)
+                            .toString()
+                            .slice(0, -2)
                       }
                       className=""
                       displayType={"text"}
@@ -1413,7 +1417,7 @@ function InvoiceDetailScreen(props) {
                     size="sm"
                     block={1}
                     secondary={1}
-                    onClick={(e) => {saveAs("Draft"); saveInvoiceDetail(e)}}
+                    onClick={(e) => { saveAs("Draft"); saveInvoiceDetail(e) }}
                   >
                     <CheckCircleIcon className="h-5 w-5 mr-1" /> Save As Draft
                   </Button>
@@ -1462,8 +1466,7 @@ function InvoiceDetailScreen(props) {
         </div>
       )}
     </div>
-    </Container>
-    
+
   );
 }
 

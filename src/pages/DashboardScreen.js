@@ -19,8 +19,7 @@ function DashboardScreen() {
 
   return (
 
-    <Container>
-        <div>
+    <div>
       <div className="p-4">
         <PageTitle title="Dashboard" />
       </div>
@@ -49,8 +48,7 @@ function DashboardScreen() {
         </div>
       </div>
     </div>
-      </Container>
-    
+
   );
 }
 
