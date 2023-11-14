@@ -28,6 +28,7 @@ import {
   setSettingModalOpen,
   updateExisitingInvoiceForm,
   updateNewInvoiceForm,
+  InvoiceUserdetails,
 } from "../../store/invoiceSlice";
 import {
   getSelectedClient,
@@ -58,7 +59,7 @@ import {
 } from "../../utils/match";
 import PageTitle from "../../components/Common/PageTitle";
 import Container from "../../components/Container/Container";
-
+import Swal from 'sweetalert2';
 function InvoiceDetailScreen(props) {
   const { initLoading, showNavbar, toggleNavbar, setEscapeOverflow } =
     useAppContext();
@@ -90,9 +91,6 @@ function InvoiceDetailScreen(props) {
   const isConfirm = useSelector(getIsConfirm);
 
   const [invoiceForm, setInvoiceForm] = useState(null);
-
-
-  console.log('invoiceForm------------>>>', invoiceForm);
 
   console.log("invoiceForm", invoiceForm);
   const [isViewMode, setIsViewMode] = useState(false);
@@ -338,11 +336,7 @@ function InvoiceDetailScreen(props) {
   const handlerInvoiceClientValue = useCallback((event, keyName) => {
 
 
-    console.log("keyName----->", keyName);
-
     const value = typeof event === "string" ? new Date(event) : event?.target?.value;
-
-    console.log("value----->", value);
 
     setInvoiceForm((prev) => {
       return {
@@ -387,7 +381,6 @@ function InvoiceDetailScreen(props) {
   const addPercentageTax = useCallback(() => {
     const isSomeTaxes = invoiceForm?.taxes?.some(
 
-      console.log('isSomeTaxes--------->>>', isSomeTaxes),
       (form) => form.type === "percentage"
     );
 
@@ -468,9 +461,10 @@ function InvoiceDetailScreen(props) {
   );
 
   const saveInvoiceDetail = async (e) => {
-    console.log("e--->", e);
+    console.log("e--------------------->", e);
 
     e.preventDefault();
+    console.log("invoiceForm.clientDetail.name--------------------->", invoiceForm.clientDetail.name);
 
     const invoiceDetail = {
       clientName: invoiceForm.clientDetail.name,
@@ -484,12 +478,23 @@ function InvoiceDetailScreen(props) {
       subTotal: invoiceForm.totalAmount
 
     }
-    try {
-      const response = await Axios.post('http://localhost:8000/api/invoices', invoiceDetail);
-      console.log("res------->", response.data);
-    } catch (error) {
-      console.error(error);
-    }
+
+    console.log("invoiceDetail--------------------->", invoiceDetail);
+
+
+    dispatch(InvoiceUserdetails(invoiceDetail)).then((result) => {
+      if (result.payload) {
+        Swal.fire('Invoice Details Saved Successfully');
+        // navigate('/')
+      }
+
+    })
+    // try {
+    //   const response = await Axios.post('http://localhost:8000/api/invoices', invoiceDetail);
+    //   console.log("res------->", response.data);
+    // } catch (error) {
+    //   console.error(error);
+    // }
   }
 
   const goInvoiceList = useCallback(() => {
@@ -1442,7 +1447,8 @@ function InvoiceDetailScreen(props) {
                   size="sm"
                   block={1}
                   success={1}
-                  onClick={() => saveAs("Paid")}
+                  type="submit"
+                  onClick={(e) => { saveInvoiceDetail(e) }}
                 >
                   <SecurityIcon className="h-5 w-5 mr-1" />{" "}
                   {params.id === "new" ? "Save" : "Update"} As Paid
