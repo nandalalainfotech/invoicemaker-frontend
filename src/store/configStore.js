@@ -4,7 +4,8 @@ import productRedicer from "./productSlice";
 import companyReducer from "./companySlice";
 import invoiceReducer from "./invoiceSlice";
 import userReducer from "./userSlice";
-import otpReducer from "./otpSlice"
+import otpReducer from "./otpSlice";
+import invoicedetailsReducer from "./invoiceSlice"
 
 export const store = configureStore({
   reducer: {
@@ -12,8 +13,9 @@ export const store = configureStore({
     company: companyReducer,
     products: productRedicer,
     invoices: invoiceReducer,
-    user : userReducer,
+    user: userReducer,
     otp: otpReducer,
+    invoicedetails: invoicedetailsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
