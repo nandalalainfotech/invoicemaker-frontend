@@ -17,6 +17,7 @@ import {
 import ReactPaginate from "react-paginate";
 import { useAppContext } from "../../context/AppContext";
 import EmptyBar from "../Common/EmptyBar";
+import  Axios  from "axios";
 
 // Example items, to simulate fetching from another resources.
 const itemsPerPage = 10;
@@ -35,6 +36,8 @@ function ClientTable({ showAdvanceSearch = false }) {
   const [currentItems, setCurrentItems] = useState(null);
   const [pageCount, setPageCount] = useState(0);
   const [itemOffset, setItemOffset] = useState(0);
+  const [users, setUser] = useState([]);
+  const [editID, setEditID] = useState([])
 
   const clients = useMemo(() => {
     let filterData = allClients.length > 0 ? [...allClients].reverse() : [];
@@ -74,7 +77,8 @@ function ClientTable({ showAdvanceSearch = false }) {
 
   const handleEdit = useCallback(
     (item) => {
-      dispatch(setEditedId(item.id));
+            dispatch(setEditedId(item.id));
+      setEditID(item.id)
     },
     [dispatch]
   );
@@ -89,18 +93,24 @@ function ClientTable({ showAdvanceSearch = false }) {
     setItemOffset(0);
   }, []);
 
+  const getData = async () => {
+    const response = await Axios.get('http://localhost:8005/api/clients/getClientUser');
+    
+  
+    setUser(response.data)
+
+  }
+  
   useEffect(() => {
-    // Fetch items from another resources.
-    const endOffset = itemOffset + itemsPerPage;
-    setCurrentItems(clients.slice(itemOffset, endOffset));
-    setPageCount(Math.ceil(clients.length / itemsPerPage));
-  }, [clients, itemOffset]);
+    getData();
+    
+  }, []);
 
   return (
     <>
       {showAdvanceSearch === true && (
         <div className="bg-white rounded-xl px-3 py-3 mb-3">
-          <div className="font-title mb-2">Advanced Search</div>
+                    <div className="font-title mb-2">Advanced Search</div>
           <div className="flex w-full flex-col sm:flex-row">
             <div className="mb-2 sm:mb-0 sm:text-left text-default-color flex flex-row font-title flex-1 px-2">
               <div className="h-12 w-12 rounded-2xl bg-gray-100 mr-2 flex justify-center items-center">
@@ -196,13 +206,13 @@ function ClientTable({ showAdvanceSearch = false }) {
         </div>
 
         <div>
-          {currentItems &&
-            currentItems.map((client) => (
+          {users &&
+            users.map((client) => (
               <div className={defaultTdWrapperStyle} key={client.id}>
                 <div className={defaultTdStyle}>
                   <div className={defaultTdContentTitleStyle}>Name</div>
                   <div className={defaultTdContent}>
-                    {client.image ? (
+                    {/* {client.image ? (
                       <img
                         className="object-cover h-10 w-10 rounded-2xl"
                         src={client.image}
@@ -223,10 +233,10 @@ function ClientTable({ showAdvanceSearch = false }) {
                           />
                         </svg>
                       </span>
-                    )}
+                    )} */}
 
                     <span className="whitespace-nowrap text-ellipsis overflow-hidden pl-1">
-                      {client.name}
+                      {client.clientName}
                     </span>
                   </div>
                 </div>
@@ -234,7 +244,7 @@ function ClientTable({ showAdvanceSearch = false }) {
                   <div className={defaultTdContentTitleStyle}>Mobile</div>
                   <div className={defaultTdContent}>
                     <span className="whitespace-nowrap text-ellipsis overflow-hidden">
-                      {client.mobileNo}
+                      {client.clientMobileNo}
                     </span>
                   </div>
                 </div>
@@ -242,7 +252,7 @@ function ClientTable({ showAdvanceSearch = false }) {
                   <div className={defaultTdContentTitleStyle}>Email</div>
                   <div className={defaultTdContent}>
                     <span className="whitespace-nowrap text-ellipsis overflow-hidden">
-                      {client.email}{" "}
+                      {client.clientEmail}{" "}
                     </span>
                   </div>
                 </div>

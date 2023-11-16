@@ -17,10 +17,12 @@ import {
   defaultSkeletonNormalStyle,
 } from "../../constants/defaultStyles";
 import {
+  ClientUser,
   addNewClient,
   getClientNewForm,
   updateNewClientFormField,
 } from "../../store/clientSlice";
+import Swal from "sweetalert2";
 
 const emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
 
@@ -40,7 +42,7 @@ function QuickAddClient({ editForm }) {
 
   const [isTouched, setIsTouched] = useState(false);
   const [clientForm, setClientForm] = useState(emptyForm);
-  const [validForm, setValidForm] = useState(
+    const [validForm, setValidForm] = useState(
     Object.keys(emptyForm).reduce((a, b) => {
       return { ...a, [b]: false };
     }, {})
@@ -57,9 +59,9 @@ function QuickAddClient({ editForm }) {
   const handlerClientValue = useCallback(
     (event, keyName) => {
       const value = event.target.value;
-
+      
       setClientForm((prev) => {
-        return { ...prev, [keyName]: value };
+                return { ...prev, [keyName]: value };
       });
 
       dispatch(updateNewClientFormField({ key: keyName, value }));
@@ -67,26 +69,45 @@ function QuickAddClient({ editForm }) {
     [dispatch]
   );
 
-  const submitHandler = useCallback(() => {
+ 
+  const submitHandler = useCallback((e) => {
     setIsTouched(true);
 
-    const isValid = Object.keys(validForm).every((key) => validForm[key]);
+    e.preventDefault();
+ 
 
-    if (!isValid) {
-      toast.error("Invalid Client Form!", {
-        position: "bottom-center",
-        autoClose: 2000,
-      });
-      return;
+    const clientDetail = {
+      clientName: clientForm.name,
+      clientAddress: clientForm.billingAddress,
+      clientEmail: clientForm.email,
+      clientMobileNo: clientForm.mobileNo,
     }
 
-    toast.success("Wow so easy to Update!", {
-      position: "bottom-center",
-      autoClose: 2000,
-    });
+    dispatch(ClientUser(clientDetail)).then((result) => {
+      if (result.payload) {
+        Swal.fire('Invoice Details Saved Successfully');
+        // navigate('/')
+      }
+     
+    })
+    setClientForm(clientNewForm);
+    // const isValid = Object.keys(validForm).every((key) => validForm[key]);
 
-    dispatch(addNewClient({ ...clientForm, id: nanoid() }));
-    setIsTouched(false);
+    // if (!isValid) {
+    //   toast.error("Invalid Client Form!", {
+    //     position: "bottom-center",
+    //     autoClose: 2000,
+    //   });
+    //   return;
+    // }
+
+    // toast.success("Wow so easy to Update!", {
+    //   position: "bottom-center",
+    //   autoClose: 2000,
+    // });
+
+    // dispatch(addNewClient({ ...clientForm, id: nanoid() }));
+    // setIsTouched(false);
   }, [clientForm, dispatch, validForm]);
 
   const imageUploadClasses = useMemo(() => {
