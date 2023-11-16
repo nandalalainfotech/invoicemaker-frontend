@@ -57,6 +57,7 @@ import {
     sumTotalAmount,
     sumTotalTaxes,
 } from "../../utils/match";
+import CheckCircleIcon from "../../components/Icons/CheckCircleIcon";
 
 function HomeScreen(props) {
     const { initLoading, showNavbar, toggleNavbar, setEscapeOverflow } =
@@ -680,7 +681,7 @@ function HomeScreen(props) {
                 <PageTitle
                     title={
                         <>
-                            {params.id === "new"
+                            {params.id !== "new"
                                 ? "New Invoice"
                                 : `Invoice Detail ${invoiceForm?.statusName}`}
                         </>
@@ -1431,11 +1432,11 @@ function HomeScreen(props) {
                 </div>
             )}
 
-
-            <div className="px-4 pt-3">
-                <div className="bg-white rounded-xl px-3 py-3">
-                    <div className="flex flex-col flex-wrap sm:flex-row justify-end">
-                        {/* <div className="w-full flex-1 my-1 sm:my-1 md:my-0 px-1">
+            {invoiceForm && invoiceForm?.statusIndex !== "3" && (
+                <div className="px-4 pt-3">
+                    <div className="bg-white rounded-xl px-3 py-3">
+                        <div className="flex flex-col flex-wrap sm:flex-row justify-end">
+                            {/* <div className="w-full flex-1 my-1 sm:my-1 md:my-0 px-1">
                             <Button
                                 outlined={1}
                                 size="sm"
@@ -1446,7 +1447,7 @@ function HomeScreen(props) {
                                 <CheckCircleIcon className="h-5 w-5 mr-1" /> Save As Draft
                             </Button>
                         </div> */}
-                        {/* <div className="w-full flex-1 my-1 sm:my-1 md:my-0 px-1">
+                            {/* <div className="w-full flex-1 my-1 sm:my-1 md:my-0 px-1">
                             <Button
                                 outlined={1}
                                 size="sm"
@@ -1458,20 +1459,68 @@ function HomeScreen(props) {
                                 {params.id !== "new" ? "Save" : "Update"} As Unpaid
                             </Button>
                         </div> */}
-                        <div className="w-1/2  my-1 sm:my-1 md:my-0 px-1 ">
-                            <Button
-                                size="sm"
-                                block={1}
-                                success={1}
-                                onClick={(e) => { saveInvoiceDetail(e) }}
-                            >
-                                <SecurityIcon className="h-5 w-5 mr-1" />{" "}
-                                {params.id !== "new" ? "Save" : "Update"} As Paid
-                            </Button>
+                            <div className="w-1/2  my-1 sm:my-1 md:my-0 px-1 ">
+                                <Button
+                                    size="sm"
+                                    block={1}
+                                    success={1}
+                                    onClick={(e) => { saveInvoiceDetail(e) }}
+                                >
+                                    <SecurityIcon className="h-5 w-5 mr-1" />{" "}
+                                    {params.id !== "new" ? "Save" : "Update"} As Paid
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            )}
+
+            {invoiceForm && invoiceForm?.statusIndex !== "3" && (
+                <div className="px-4 pt-3">
+                    <div className="bg-white rounded-xl px-3 py-3">
+                        <div className="flex flex-col flex-wrap sm:flex-row">
+                            {params.id === "new" && (
+                                <div className="w-full flex-1 my-1 sm:my-1 md:my-0 px-1">
+                                    <Button
+                                        outlined={1}
+                                        size="sm"
+                                        block={1}
+                                        secondary={1}
+                                        onClick={() => saveAs("Draft")}
+                                    >
+                                        <CheckCircleIcon className="h-5 w-5 mr-1" /> Save As Draft
+                                    </Button>
+                                </div>
+                            )}
+                            {invoiceForm?.statusIndex !== "2" && (
+                                <div className="w-full flex-1 my-1 sm:my-1 md:my-0 px-1">
+                                    <Button
+                                        outlined={1}
+                                        size="sm"
+                                        block={1}
+                                        danger={1}
+                                        onClick={() => saveAs("Unpaid")}
+                                    >
+                                        <DollarIcon className="h-5 w-5 mr-1" />{" "}
+                                        {params.id === "new" ? "Save" : "Update"} As Unpaid
+                                    </Button>
+                                </div>
+                            )}
+                            <div className="w-full flex-1 my-1 sm:my-1 md:my-0 px-1">
+                                <Button
+                                    size="sm"
+                                    block={1}
+                                    success={1}
+                                    onClick={() => saveAs("Paid")}
+                                >
+                                    <SecurityIcon className="h-5 w-5 mr-1" />{" "}
+                                    {params.id === "new" ? "Save" : "Update"} As Paid
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {invoiceForm && (
                 <div className="p-4">

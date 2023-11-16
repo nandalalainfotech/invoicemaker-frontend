@@ -65,6 +65,17 @@ export const InvoiceUserdetails = createAsyncThunk(
   }
 );
 
+
+export const deleteInvoice = createAsyncThunk(
+  'invoice/deleteinvoice',
+  async (id) => {
+    console.log("register-------->", id);
+    const request = await Axios.delete(`/api/invoices/deleteInvoice/${id}`);
+    const response = await request.data;
+    return response
+  }
+);
+
 // export const signIn = signIn({
 //   // state.newForm = { ...action.payload };
 //   //     localforage.setItem(INVOICE_FORM_KEY, { ...state.newForm });
