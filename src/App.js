@@ -24,6 +24,7 @@ import RegisterScreen from "./pages/invoices/RegisterScreen";
 import ForgetPassword from "./pages/invoices/ForgetPassword";
 import OtpScreen from "./pages/invoices/OtpScreen";
 import ChangePasswordScreen from "./pages/invoices/ChangePasswordScreen";
+import HomeScreen from "./pages/invoices/HomeScreen";
 
 const App = () => {
   const { initialSetData } = useInitApp();
@@ -86,7 +87,8 @@ const App = () => {
     <BrowserRouter>
       <Container>
         <Routes>
-          <Route path="/" element={<DashboardScreen />} />
+          <Route path="/" element={<HomeScreen />} />
+          <Route path="dashboard" element={<DashboardScreen />} />
           <Route path="clients" element={<ClientListScreen />}></Route>
           <Route path="products" element={<ProductListScreen />}></Route>
           <Route path="invoices">
@@ -94,10 +96,10 @@ const App = () => {
             <Route path=":id" element={<InvoiceDetailScreen />} />
           </Route>
           <Route path="about" element={<AboutScreen />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
           <Route path="/login" element={<Testscreen />} />
           <Route path="/forgetPassword" element={<ForgetPassword />} />
-          <Route path="/otpScreen" element={<OtpScreen />} />
+          {/* <Route path="/otpScreen" element={<OtpScreen />} /> */}
           <Route path="/changePasswordScreen" element={<ChangePasswordScreen />} />
           <Route path="/register" element={<RegisterScreen />} />
         </Routes>

@@ -1,8 +1,8 @@
-import React, { useCallback, useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { toast } from "react-toastify";
-import { useSelector, useDispatch } from "react-redux";
+import React, { useCallback, useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
+import { useNavigate } from "react-router-dom";
 import {
   getIsInvoiceConfirmModal,
   setConfirmModalOpen,
@@ -14,15 +14,17 @@ function InvoiceConfirmModal(props) {
   const dispatch = useDispatch();
   const isOpenConfirmModal = useSelector(getIsInvoiceConfirmModal);
   const [animate, setAnimate] = useState(true);
+  const navigate = useNavigate();
 
   const onConfirmModal = useCallback(() => {
     dispatch(setIsConfirm(true));
     dispatch(setConfirmModalOpen(false));
-    toast.success("Successfully Action", {
-      position: "bottom-center",
-      autoClose: 2000,
-    });
-  }, [dispatch]);
+    navigate("/login");
+    // toast.success("Successfully Action", {
+    //   position: "bottom-center",
+    //   autoClose: 2000,
+    // });
+  }, [dispatch, navigate]);
 
   const onCancelHandler = useCallback(() => {
     dispatch(setConfirmModalOpen(false));
@@ -70,12 +72,12 @@ function InvoiceConfirmModal(props) {
                       className="text-lg leading-6 font-medium text-gray-900"
                       id="modal-title"
                     >
-                      Invoice Confirmation
+                      Please sign in
                     </h3>
                     <div className="mt-2">
                       <p className="text-sm text-gray-500">
-                        Only "Draft save" can be modified. If "Unpaid" or "Paid"
-                        invoice can't be modified.
+                        Only "User" can be download. you are not a "user" Please
+                        sign in and continue.
                       </p>
                     </div>
                   </div>

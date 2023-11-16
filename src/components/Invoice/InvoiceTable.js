@@ -32,8 +32,10 @@ function InvoiceTable({ showAdvanceSearch = false }) {
 
   const [searchForm, setSearchForm] = useState(emptySearchForm);
   const [currentItems, setCurrentItems] = useState(null);
+  // console.log("currentItems===>", currentItems)
   const [pageCount, setPageCount] = useState(0);
   const [itemOffset, setItemOffset] = useState(0);
+  const [detailInvoice, setDetailInvoice] = useState([]);
 
   const invoices = useMemo(() => {
     let filterData = allInvoices.length > 0 ? [...allInvoices].reverse() : [];
@@ -82,12 +84,20 @@ function InvoiceTable({ showAdvanceSearch = false }) {
     setItemOffset(0);
   }, []);
 
+  // const detail = localStorage.getItem("details");
+
+  // const invoiceDetail = JSON.parse(detail);
+
+  // currentItems.push(invoiceDetail)
+
+  // console.log("invoiceDetail------------->", invoiceDetail);
   useEffect(() => {
     // Fetch items from another resources.
     const endOffset = itemOffset + itemsPerPage;
     setCurrentItems(invoices.slice(itemOffset, endOffset));
     setPageCount(Math.ceil(invoices.length / itemsPerPage));
   }, [invoices, itemOffset]);
+
 
   return (
     <>
@@ -187,8 +197,8 @@ function InvoiceTable({ showAdvanceSearch = false }) {
                         (invoice.statusIndex === "2"
                           ? "bg-red-100 text-red-400"
                           : invoice.statusIndex === "3"
-                          ? "bg-green-200 text-green-600"
-                          : "bg-gray-100 text-gray-600 ")
+                            ? "bg-green-200 text-green-600"
+                            : "bg-gray-100 text-gray-600 ")
                       }
                     >
                       {invoice.statusName}
