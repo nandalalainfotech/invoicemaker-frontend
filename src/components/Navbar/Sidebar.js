@@ -16,7 +16,7 @@ import Skeleton from "react-loading-skeleton";
 const NAV_DATA = [
   {
     title: "Dashboard",
-    link: "/",
+    link: "dashboard",
     Icon: HomeIcon,
   },
   {
@@ -55,9 +55,9 @@ function Sidebar() {
   }, [showNavbar, toggleNavbar]);
 
   const aboutRoute = useMemo(() => pathname === "/about", [pathname]);
-
   return (
     <>
+
       <nav
         className={
           showNavbar
@@ -198,6 +198,7 @@ function Sidebar() {
           </motion.a>
         </div>
       </nav>
+
     </>
   );
 }

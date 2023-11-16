@@ -81,6 +81,12 @@ function InvoiceDetailScreen(props) {
     removeAfterPrint: true,
   });
 
+  // const detail = localStorage.getItem("details");
+
+  // const invoiceDetail = JSON.parse(detail)
+
+  // console.log("invoiceDetail------------->", invoiceDetail);
+
   const invoiceNewForm = useSelector(getInvoiceNewForm);
   const allInvoiceDetails = useSelector(getAllInvoiceDetailSelector);
   const company = useSelector(getCompanyData);
@@ -92,7 +98,7 @@ function InvoiceDetailScreen(props) {
 
   const [invoiceForm, setInvoiceForm] = useState(null);
 
-  console.log("invoiceForm", invoiceForm);
+  // console.log("invoiceForm", invoiceForm);
   const [isViewMode, setIsViewMode] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [statusData, setStatusData] = useState({
@@ -1414,8 +1420,8 @@ function InvoiceDetailScreen(props) {
       {invoiceForm && invoiceForm?.statusIndex !== "3" && (
         <div className="px-4 pt-3">
           <div className="bg-white rounded-xl px-3 py-3">
-            <div className="flex flex-col flex-wrap sm:flex-row">
-              {params.id === "new" && (
+            <div className="flex flex-col flex-wrap sm:flex-row justify-end">
+              {/* {params.id === "new" && (
                 <div className="w-full flex-1 my-1 sm:my-1 md:my-0 px-1">
                   <Button
                     outlined={1}
@@ -1441,8 +1447,8 @@ function InvoiceDetailScreen(props) {
                     {params.id === "new" ? "Save" : "Update"} As Unpaid
                   </Button>
                 </div>
-              )}
-              <div className="w-full flex-1 my-1 sm:my-1 md:my-0 px-1">
+              )} */}
+              <div className="w-1/2   my-1 sm:my-1 md:my-0 px-1  " >
                 <Button
                   size="sm"
                   block={1}

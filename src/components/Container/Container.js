@@ -14,21 +14,27 @@ function Container({ children }) {
   const isOpenClientSelector = useSelector(getIsOpenClientSelector);
   const isOpenProductSelector = useSelector(getIsOpenProductSelector);
 
+  const { user } = useSelector(state => state.user)
+  let userDetail = sessionStorage.getItem('user', JSON.stringify("user"));
+
+  // console.log('user------->>', user);
+
   return (
     <div
       className={
         "relative min-h-screen lg:flex " +
         (escapeOverflow ? "" : "  app-wraper ") +
-        (isOpenClientSelector || isOpenProductSelector
+        (isOpenClientSelector
           ? " fixed-body-scroll"
           : "")
       }
     >
       <Navbar />
-      <Sidebar />
+      {userDetail ? (<Sidebar />) : null}
+
       <div
         className={
-          showNavbar
+          showNavbar && userDetail
             ? defaultContainerClasses + " pl-72 ease-in"
             : defaultContainerClasses + " "
         }
