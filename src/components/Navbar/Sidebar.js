@@ -1,8 +1,8 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import HomeIcon from "../Icons/HomeIcon";
 import ProductIcon from "../Icons/ProductIcon";
 import InvoiceIcon from "../Icons/InvoiceIcon";
@@ -12,6 +12,9 @@ import SecurityIcon from "../Icons/SecurityIcon";
 import InvoiceNavbarLoading from "../Loading/InvoiceNavbarLoading";
 import { getCompanyData } from "../../store/companySlice";
 import Skeleton from "react-loading-skeleton";
+import Axios from "axios";
+import { userRoles } from "../../store/userRoleSlice";
+
 
 const NAV_DATA = [
   {
@@ -45,6 +48,21 @@ function Sidebar() {
   const { showNavbar, initLoading, toggleNavbar } = useAppContext();
   const { pathname } = useLocation();
   const company = useSelector(getCompanyData);
+  const [userInfo, setUserInfo] = useState([]);
+
+  const dispatch = useDispatch();
+
+  const userId = sessionStorage.getItem('user');
+  const id = JSON.parse(userId)
+ 
+
+  const userRole = useSelector((state) => state.user)
+  const loginRole = userRole.user?.userrole;
+
+  
+  useEffect(() => {
+    dispatch(userRoles());
+  }, []);
 
   const onClickNavbar = useCallback(() => {
     const width = window.innerWidth;
@@ -66,6 +84,7 @@ function Sidebar() {
         }
       >
         <div className="flex justify-between">
+
           <motion.span
             className="font-bold font-title text-2xl sm:text-2xl p-2 flex justify-center items-center"
             initial={{
@@ -80,9 +99,11 @@ function Sidebar() {
               damping: 18,
             }}
           >
+            { }
             <span className="nav-loading">
               <InvoiceNavbarLoading loop />
             </span>
+
             Invoice Maker
           </motion.span>
         </div>
@@ -105,8 +126,10 @@ function Sidebar() {
           </motion.span>
         )}
         <ul className="mt-4">
-          {NAV_DATA.map(({ title, link, Icon }) => (
-            <li key={title} className="mb-2">
+
+          {/* {NAV_DATA.map(({ title, link, Icon }) => (
+            
+            <li key={title} className="mb-2" >
               <NavLink
                 to={link}
                 className={" rounded-md side-link"}
@@ -139,7 +162,255 @@ function Sidebar() {
                 )}
               </NavLink>
             </li>
-          ))}
+          ))} */}
+
+          {loginRole === 'admin' ? (
+            <>
+              <li className="mb-2" >
+                <NavLink
+                  // to={link}
+                  className={" rounded-md side-link"}
+                  onClick={onClickNavbar}
+                >
+                  {({ isActive }) => (
+                    <motion.span
+                      // key={`${title}_nav_item`}
+                      className={
+                        isActive
+                          ? navItemDefaultClasses + " primary-self-text "
+                          : navItemDefaultClasses + " text-default-color "
+                      }
+                      whileHover={{
+                        color: "rgb(0, 102, 255)",
+                        backgroundColor: "rgba(0, 102, 255, 0.1)",
+                        translateX: isActive ? 1 : 4,
+                        transition: {
+                          backgroundColor: {
+                            type: "spring",
+                            damping: 18,
+                          },
+                        },
+                      }}
+                      whileTap={{ scale: isActive ? 1 : 0.9 }}
+                    >
+                      <span style={{ paddingRight: "12px" }}>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-6 w-6"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                          />
+                        </svg>
+                      </span>
+                      Dashboard
+                    </motion.span>
+                  )}
+                </NavLink>
+              </li>
+              <li className="mb-2">
+                <NavLink
+                  // to={link}
+                  className={" rounded-md side-link"}
+                  onClick={onClickNavbar}
+                >
+                  {({ isActive }) => (
+                    <motion.span
+                      // key={`${title}_nav_item`}
+                      className={
+                        isActive
+                          ? navItemDefaultClasses + " text-default-color " : navItemDefaultClasses + " primary-self-text "
+                      }
+                      whileHover={{
+                        color: "rgb(0, 102, 255)",
+                        backgroundColor: "rgba(0, 102, 255, 0.1)",
+                        translateX: isActive ? 2 : 4,
+                        transition: {
+                          backgroundColor: {
+                            type: "spring",
+                            damping: 18,
+                          },
+                        },
+                      }}
+                      whileTap={{ scale: isActive ? 1 : 0.9 }}
+                    >
+                      <span style={{ paddingRight: "12px" }}>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-6 w-6"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          />
+                        </svg>
+                      </span>
+                      Invoices
+                    </motion.span>
+                  )}
+                </NavLink>
+              </li>
+              <li className="mb-2">
+                <NavLink
+                  // to={link}
+                  className={" rounded-md side-link"}
+                  onClick={onClickNavbar}
+                >
+                  {({ isActive }) => (
+                    <motion.span
+                      // key={`${title}_nav_item`}
+                      className={
+                        isActive
+                          ? navItemDefaultClasses + " text-default-color " : navItemDefaultClasses + " primary-self-text "
+                      }
+                      whileHover={{
+                        color: "rgb(0, 102, 255)",
+                        backgroundColor: "rgba(0, 102, 255, 0.1)",
+                        translateX: isActive ? 3 : 4,
+                        transition: {
+                          backgroundColor: {
+                            type: "spring",
+                            damping: 18,
+                          },
+                        },
+                      }}
+                      whileTap={{ scale: isActive ? 1 : 0.9 }}
+                    >
+                      <span style={{ paddingRight: "12px" }}>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-6 w-6"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                          />
+                        </svg>
+                      </span>
+                      Clients
+                    </motion.span>
+                  )}
+                </NavLink>
+              </li>
+              <li className="mb-2">
+                <NavLink
+                  // to={link}
+                  className={" rounded-md side-link"}
+                  onClick={onClickNavbar}
+                >
+                  {({ isActive }) => (
+                    <motion.span
+                      // key={`${title}_nav_item`}
+                      className={
+                        isActive
+                          ? navItemDefaultClasses + " text-default-color " : navItemDefaultClasses + " primary-self-text "
+                      }
+                      whileHover={{
+                        color: "rgb(0, 102, 255)",
+                        backgroundColor: "rgba(0, 102, 255, 0.1)",
+                        translateX: isActive ? 1 : 4,
+                        transition: {
+                          backgroundColor: {
+                            type: "spring",
+                            damping: 18,
+                          },
+                        },
+                      }}
+                      whileTap={{ scale: isActive ? 1 : 0.9 }}
+                    >
+                      <span style={{ paddingRight: "12px" }}>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-6 w-6"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
+                          />
+                        </svg>
+                      </span>
+                      Products
+                    </motion.span>
+                  )}
+                </NavLink>
+              </li>
+            </>
+          ) : (
+            <>
+              <li className="mb-2">
+                <NavLink
+                  // to={link}
+                  className={" rounded-md side-link"}
+                  onClick={onClickNavbar}
+                >
+                  {({ isActive }) => (
+                    <motion.span
+                      // key={`${title}_nav_item`}
+                      className={
+                        isActive
+                          ? navItemDefaultClasses + " text-default-color " : navItemDefaultClasses + " primary-self-text "
+                      }
+                      whileHover={{
+                        color: "rgb(0, 102, 255)",
+                        backgroundColor: "rgba(0, 102, 255, 0.1)",
+                        translateX: isActive ? 2 : 4,
+                        transition: {
+                          backgroundColor: {
+                            type: "spring",
+                            damping: 18,
+                          },
+                        },
+                      }}
+                      whileTap={{ scale: isActive ? 1 : 0.9 }}
+                    >
+                      <span style={{ paddingRight: "12px" }}>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-6 w-6"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          />
+                        </svg>
+                      </span>
+                      Invoices
+                    </motion.span>
+                  )}
+                </NavLink>
+              </li></>
+          )}
+
+          {/* </> */}
+
+
         </ul>
 
         <hr />

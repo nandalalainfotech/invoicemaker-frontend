@@ -6,7 +6,7 @@ import invoiceReducer from "./invoiceSlice";
 import userReducer from "./userSlice";
 import otpReducer from "./otpSlice";
 import invoicedetailsReducer from "./invoiceSlice";
-import invoicedeleteReducer from "./invoiceSlice";
+import userRolesReducer from "./userRoleSlice";     
 
 export const store = configureStore({
   reducer: {
@@ -17,7 +17,7 @@ export const store = configureStore({
     user: userReducer,
     otp: otpReducer,
     invoicedetails: invoicedetailsReducer,
-    deleteInvoice: invoicedeleteReducer,
+    userrole:userRolesReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
