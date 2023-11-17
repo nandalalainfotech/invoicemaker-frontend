@@ -17,7 +17,8 @@ import {
 import ReactPaginate from "react-paginate";
 import { useAppContext } from "../../context/AppContext";
 import EmptyBar from "../Common/EmptyBar";
-import  Axios  from "axios";
+import Axios from "axios";
+import { getClientDetails } from "../../store/clientDetailsSlice";
 
 // Example items, to simulate fetching from another resources.
 const itemsPerPage = 10;
@@ -75,9 +76,13 @@ function ClientTable({ showAdvanceSearch = false }) {
     [dispatch]
   );
 
+  const clientDetail = useSelector((state) => state.clientDetails)
+  const detailsClient = clientDetail.clientdetail;
+  // setUser(detailsClient)
+
   const handleEdit = useCallback(
     (item) => {
-            dispatch(setEditedId(item.id));
+      dispatch(setEditedId(item.id));
       setEditID(item.id)
     },
     [dispatch]
@@ -93,24 +98,21 @@ function ClientTable({ showAdvanceSearch = false }) {
     setItemOffset(0);
   }, []);
 
-  const getData = async () => {
-    const response = await Axios.get('http://localhost:8005/api/clients/getClientUser');
-    
-  
-    setUser(response.data)
-
-  }
+  useEffect(() => {
+    setUser(detailsClient)
+  }, [detailsClient])
   
   useEffect(() => {
-    getData();
-    
+    dispatch(getClientDetails());
+  
+
   }, []);
 
   return (
     <>
       {showAdvanceSearch === true && (
         <div className="bg-white rounded-xl px-3 py-3 mb-3">
-                    <div className="font-title mb-2">Advanced Search</div>
+          <div className="font-title mb-2">Advanced Search</div>
           <div className="flex w-full flex-col sm:flex-row">
             <div className="mb-2 sm:mb-0 sm:text-left text-default-color flex flex-row font-title flex-1 px-2">
               <div className="h-12 w-12 rounded-2xl bg-gray-100 mr-2 flex justify-center items-center">
@@ -207,8 +209,9 @@ function ClientTable({ showAdvanceSearch = false }) {
 
         <div>
           {users &&
+          
             users.map((client) => (
-              <div className={defaultTdWrapperStyle} key={client.id}>
+              <div className={defaultTdWrapperStyle} key={client._id}>
                 <div className={defaultTdStyle}>
                   <div className={defaultTdContentTitleStyle}>Name</div>
                   <div className={defaultTdContent}>
