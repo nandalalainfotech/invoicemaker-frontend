@@ -54,12 +54,11 @@ function Sidebar() {
 
   const userId = sessionStorage.getItem('user');
   const id = JSON.parse(userId)
- 
+  const roles = id.userrole;
 
-  const userRole = useSelector((state) => state.user)
-  const loginRole = userRole.user?.userrole;
+  // const userRole = useSelector((state) => state.user)
+  // const loginRole = userRole.user?.userrole;
 
-  
   useEffect(() => {
     dispatch(userRoles());
   }, []);
@@ -164,11 +163,12 @@ function Sidebar() {
             </li>
           ))} */}
 
-          {loginRole === 'admin' ? (
+          {roles === 'admin' ? (
             <>
-              <li className="mb-2" >
+
+              <li className="mb-2">
                 <NavLink
-                  // to={link}
+                  to={'/dashboard'}
                   className={" rounded-md side-link"}
                   onClick={onClickNavbar}
                 >
@@ -177,8 +177,7 @@ function Sidebar() {
                       // key={`${title}_nav_item`}
                       className={
                         isActive
-                          ? navItemDefaultClasses + " primary-self-text "
-                          : navItemDefaultClasses + " text-default-color "
+                          ? navItemDefaultClasses + " primary-self-text " : navItemDefaultClasses + " text-default-color "
                       }
                       whileHover={{
                         color: "rgb(0, 102, 255)",
@@ -215,9 +214,9 @@ function Sidebar() {
                   )}
                 </NavLink>
               </li>
-              <li className="mb-2">
+              {/* <li className="mb-2" >
                 <NavLink
-                  // to={link}
+                  to={"/invoices"}
                   className={" rounded-md side-link"}
                   onClick={onClickNavbar}
                 >
@@ -226,12 +225,61 @@ function Sidebar() {
                       // key={`${title}_nav_item`}
                       className={
                         isActive
-                          ? navItemDefaultClasses + " text-default-color " : navItemDefaultClasses + " primary-self-text "
+                          ? navItemDefaultClasses + " primary-self-text "
+                          : navItemDefaultClasses + " text-default-color "
                       }
                       whileHover={{
                         color: "rgb(0, 102, 255)",
                         backgroundColor: "rgba(0, 102, 255, 0.1)",
                         translateX: isActive ? 2 : 4,
+                        transition: {
+                          backgroundColor: {
+                            type: "spring",
+                            damping: 18,
+                          },
+                        },
+                      }}
+                      whileTap={{ scale: isActive ? 2 : 0.9 }}
+                    >
+                      <span style={{ paddingRight: "12px" }}>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-6 w-6"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          />
+                        </svg>
+                      </span>
+                      Invoices
+                    </motion.span>
+                  )}
+                </NavLink>
+              </li> */}
+              <li className="mb-2">
+                <NavLink
+                  to={"/invoices"}
+                  className={" rounded-md side-link"}
+                  onClick={onClickNavbar}
+                >
+                  {({ isActive }) => (
+                    <motion.span
+                      // key={`${title}_nav_item`}
+                      className={
+                        isActive
+                          ? navItemDefaultClasses + " primary-self-text "
+                          : navItemDefaultClasses + " text-default-color "
+                      }
+                      whileHover={{
+                        color: "rgb(0, 102, 255)",
+                        backgroundColor: "rgba(0, 102, 255, 0.1)",
+                        translateX: isActive ? 3 : 4,
                         transition: {
                           backgroundColor: {
                             type: "spring",
@@ -264,7 +312,7 @@ function Sidebar() {
               </li>
               <li className="mb-2">
                 <NavLink
-                  // to={link}
+                  to={"/clients"}
                   className={" rounded-md side-link"}
                   onClick={onClickNavbar}
                 >
@@ -273,7 +321,8 @@ function Sidebar() {
                       // key={`${title}_nav_item`}
                       className={
                         isActive
-                          ? navItemDefaultClasses + " text-default-color " : navItemDefaultClasses + " primary-self-text "
+                          ? navItemDefaultClasses + " primary-self-text "
+                          : navItemDefaultClasses + " text-default-color "
                       }
                       whileHover={{
                         color: "rgb(0, 102, 255)",
@@ -311,7 +360,7 @@ function Sidebar() {
               </li>
               <li className="mb-2">
                 <NavLink
-                  // to={link}
+                  to={"/products"}
                   className={" rounded-md side-link"}
                   onClick={onClickNavbar}
                 >
@@ -320,7 +369,8 @@ function Sidebar() {
                       // key={`${title}_nav_item`}
                       className={
                         isActive
-                          ? navItemDefaultClasses + " text-default-color " : navItemDefaultClasses + " primary-self-text "
+                          ? navItemDefaultClasses + " primary-self-text "
+                          : navItemDefaultClasses + " text-default-color "
                       }
                       whileHover={{
                         color: "rgb(0, 102, 255)",
@@ -361,7 +411,7 @@ function Sidebar() {
             <>
               <li className="mb-2">
                 <NavLink
-                  // to={link}
+                  to={"/invoices"}
                   className={" rounded-md side-link"}
                   onClick={onClickNavbar}
                 >
@@ -370,7 +420,7 @@ function Sidebar() {
                       // key={`${title}_nav_item`}
                       className={
                         isActive
-                          ? navItemDefaultClasses + " text-default-color " : navItemDefaultClasses + " primary-self-text "
+                          ?  navItemDefaultClasses + " primary-self-text " : navItemDefaultClasses + " text-default-color " 
                       }
                       whileHover={{
                         color: "rgb(0, 102, 255)",
