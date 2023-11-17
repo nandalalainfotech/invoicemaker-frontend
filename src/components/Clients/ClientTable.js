@@ -77,9 +77,7 @@ function ClientTable({ showAdvanceSearch = false }) {
   );
 
   const clientDetail = useSelector((state) => state.clientDetails)
-  console.log("clientDetail---------->", clientDetail);
   const detailsClient = clientDetail.clientdetail;
-  console.log("detailsClient--------->",detailsClient)
   // setUser(detailsClient)
 
   const handleEdit = useCallback(
@@ -209,7 +207,7 @@ function ClientTable({ showAdvanceSearch = false }) {
           </div>
         </div>
 
-        <div>{console.log('users===========>',users)}
+        <div>
           {users &&
           
             users.map((client) => (
