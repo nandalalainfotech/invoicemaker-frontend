@@ -16,17 +16,21 @@ const Testscreen = () => {
 
   const navigate = useNavigate();
 
+  const userId = sessionStorage.getItem('user');
+  const id = JSON.parse(userId)
+  const roles = id?.userrole;
+
+
   useEffect(() => {
 
 
   }, []);
   const detail = localStorage.getItem("details");
-  console.log("detail-------=====", detail)
 
   const invoiceDetail = JSON.parse(detail)
 
-  console.log("invoiceDetail---22>", invoiceDetail)
   const submitHandler = async (e) => {
+    
     e.preventDefault();
 
     const userInfo = {
@@ -34,14 +38,15 @@ const Testscreen = () => {
       password: password
 
     }
-
     dispatch(loginUser(userInfo)).then(async (result) => {
-      // console.log("userInfo=====>", result.payload)
+      const userId = sessionStorage.getItem('user');
+    const id = JSON.parse(userId)
+    const roles = id?.userrole;
+    
 
       if (result.payload) {
         if (invoiceDetail) {
           invoiceDetail.userid = result.payload.id
-          console.log("detail====>", invoiceDetail)
           const request = await Axios.post('/api/invoices/invoicedetail', invoiceDetail);
           if (request) {
             setEmail('');
@@ -53,7 +58,12 @@ const Testscreen = () => {
         } else {
           setEmail('');
           setPassword('');
-          navigate("/invoices");
+          if (roles === 'admin') {
+            navigate("/dashboard");
+          }
+          else {
+            navigate("/invoices");
+          }
         }
 
       }

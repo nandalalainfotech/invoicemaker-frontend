@@ -54,7 +54,7 @@ function Sidebar() {
 
   const userId = sessionStorage.getItem('user');
   const id = JSON.parse(userId)
-  const roles = id.userrole;
+  const roles = id?.userrole;
 
   // const userRole = useSelector((state) => state.user)
   // const loginRole = userRole.user?.userrole;
