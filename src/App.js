@@ -88,7 +88,7 @@ const App = () => {
       <Container>
         <Routes>
           <Route path="/" element={<HomeScreen />} />
-          <Route path="dashboard" element={<DashboardScreen />} />
+          <Route path="/dashboard" element={<DashboardScreen />} />
           <Route path="clients" element={<ClientListScreen />}></Route>
           <Route path="products" element={<ProductListScreen />}></Route>
           <Route path="invoices">
