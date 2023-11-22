@@ -76,6 +76,10 @@ export const deleteInvoice = createAsyncThunk(
   }
 );
 
+export const InvoiceListPDF = () => async (dispatch) => {
+    const  data  = await Axios.get(`/api/invoices/downloadALLPDF/`);
+};
+
 // export const signIn = signIn({
 //   // state.newForm = { ...action.payload };
 //   //     localforage.setItem(INVOICE_FORM_KEY, { ...state.newForm });
