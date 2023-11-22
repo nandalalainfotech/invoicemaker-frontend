@@ -6,6 +6,8 @@ import React, {
   useRef,
 } from "react";
 import Axios from "axios";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 import { useNavigate, useParams } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import { useReactToPrint } from "react-to-print";
@@ -59,6 +61,7 @@ import {
 } from "../../utils/match";
 import PageTitle from "../../components/Common/PageTitle";
 import Container from "../../components/Container/Container";
+import fileDownload from"js-file-download"
 import Swal from 'sweetalert2';
 function InvoiceDetailScreen(props) {
   const { initLoading, showNavbar, toggleNavbar, setEscapeOverflow } =
@@ -66,6 +69,9 @@ function InvoiceDetailScreen(props) {
   const params = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
+  const fileDownload = require("js-file-download");
+  // const pdfRef = useRef();
 
   const componentRef = useRef(null);
   const reactToPrintContent = useCallback(() => {
@@ -85,8 +91,6 @@ function InvoiceDetailScreen(props) {
 
   // const invoiceDetail = JSON.parse(detail)
 
-  // console.log("invoiceDetail------------->", invoiceDetail);
-
   const invoiceNewForm = useSelector(getInvoiceNewForm);
   const allInvoiceDetails = useSelector(getAllInvoiceDetailSelector);
   const company = useSelector(getCompanyData);
@@ -98,25 +102,28 @@ function InvoiceDetailScreen(props) {
 
   const [invoiceForm, setInvoiceForm] = useState(null);
 
-  // console.log("invoiceForm", invoiceForm);
   const [isViewMode, setIsViewMode] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [templateName, setTemplateName] = useState("Create-template");
   const [statusData, setStatusData] = useState({
     statusName: "Draft",
     statusIndex: 1,
   });
 
-  const handleExport = useCallback(() => {
-    if (showNavbar) {
-      toggleNavbar();
-    }
-    setEscapeOverflow(true);
-    setIsViewMode(true);
-    setIsExporting(true);
-    setTimeout(() => {
-      handlePrint();
-    }, 3000);
-  }, [handlePrint, setEscapeOverflow, showNavbar, toggleNavbar]);
+  const exportPdf = () => {
+    Axios.get(`/api/invoices/downloadALLPDF/`, {
+      responseType: "blob",
+      headers: {
+        "Content-Type": "application/pdf",
+      },
+    }).then((response) => { 
+      const link = document.createElement("a");
+      fileDownload(response.data, "InvoiceSearchExport.pdf");
+      link.download = "output.pdf";
+      link.click();
+    });
+  };
+
 
   const handleDownloadImg = useCallback(() => {
     if (showNavbar) {
@@ -348,6 +355,7 @@ function InvoiceDetailScreen(props) {
       return {
         ...prev,
         clientDetail: { ...prev.clientDetail, [keyName]: value },
+        companyDetail: { ...prev.companyDetail, [keyName]: value },
       };
     });
   }, []);
@@ -467,14 +475,16 @@ function InvoiceDetailScreen(props) {
   );
 
   const saveInvoiceDetail = async (e) => {
-    console.log("e--------------------->", e);
 
     e.preventDefault();
-    console.log("invoiceForm.clientDetail.name--------------------->", invoiceForm.clientDetail.name);
 
     const invoiceDetail = {
+      companyName:invoiceForm.companyDetail.companyName,
+      billingAddress:invoiceForm.companyDetail.billingAddress,
+      companyEmail:invoiceForm.companyDetail.companyEmail,
+      companyMobile:invoiceForm.companyDetail.companyMobile,
       clientName: invoiceForm.clientDetail.name,
-      clientAddress: invoiceForm.clientDetail.billingAddress,
+      clientAddress: invoiceForm.clientDetail.clientAddress,
       clientEmail: invoiceForm.clientDetail.email,
       clientMobileNo: invoiceForm.clientDetail.mobileNo,
       invoiceNo: invoiceForm.invoiceNo,
@@ -484,8 +494,6 @@ function InvoiceDetailScreen(props) {
       subTotal: invoiceForm.totalAmount
 
     }
-
-    console.log("invoiceDetail--------------------->", invoiceDetail);
 
 
     dispatch(InvoiceUserdetails(invoiceDetail)).then((result) => {
@@ -679,7 +687,7 @@ function InvoiceDetailScreen(props) {
           viewMode={isViewMode}
           onClickViewAs={toggleViewMode}
           onClickSetting={openSettingModal}
-          onClickExport={handleExport}
+          onClickExport={exportPdf}
           onClickDownloadImg={handleDownloadImg}
         />
       </div>
@@ -730,7 +738,82 @@ function InvoiceDetailScreen(props) {
                     : "text-white font-title text-center sm:text-left"
                 }
               >
-                <p className="font-bold mb-2">
+                <div className="client-form-wrapper sm:w-1/2">
+                  <div
+                    className={
+                      "font-medium " + (isExporting ? "text-xs" : "text-sm mb-1")
+                    }
+                  >
+                    {!isViewMode ? (
+                      <input
+                        autoComplete="nope"
+                        placeholder="Company Name"
+                        className={defaultInputSmStyle} style={{width:"300px",color:"black"}}
+                        // value={invoiceForm?.clientDetail?.name}
+                        onChange={(e) => handlerInvoiceClientValue(e, "companyName")}
+                      />
+                    ) : (
+                      invoiceForm?.invoiceDetail?.companyName
+                    )}
+                  </div>
+                  <div
+                    className={
+                      "font-medium " + (isExporting ? "text-xs" : "text-sm mb-1")
+                    }
+                  >
+                    {!isViewMode ? (
+                      <input
+                        autoComplete="nope"
+                        placeholder="Company Address"
+                        className={defaultInputSmStyle} style={{width:"300px",color:"black"}}
+                        // value={invoiceForm?.clientDetail?.billingAddress}
+                        onChange={(e) =>
+                          handlerInvoiceClientValue(e, "billingAddress")
+                        }
+                      />
+                    ) : (
+                      invoiceForm?.invoiceDetail?.billingAddress
+                    )}
+                  </div>
+                  <div
+                    className={
+                      "font-medium " + (isExporting ? "text-xs" : "text-sm mb-1")
+                    }
+                  >
+                    {!isViewMode ? (
+                      <input
+                        autoComplete="nope"
+                        placeholder="Company Mobile No"
+                        className={defaultInputSmStyle} style={{width:"300px",color:"black"}}
+                        // value={invoiceForm?.clientDetail?.mobileNo}
+                        onChange={(e) => handlerInvoiceClientValue(e, "companyMobile")}
+                      />
+                    ) : (
+                      invoiceForm?.invoiceDetail?.companyMobile
+                    )}
+                  </div>
+                  <div
+                    className={
+                      "font-medium " + (isExporting ? "text-xs" : "text-sm mb-1")
+                    }
+                  >
+                    {!isViewMode ? (
+                      <input
+                        autoComplete="nope"
+                        placeholder="Company Email"
+                        className={defaultInputSmStyle} style={{width:"300px",color:"black"}}
+                        // value={invoiceForm?.clientDetail?.email}
+                        onChange={(e) => handlerInvoiceClientValue(e, "companyEmail")}
+                      />
+                    ) : (
+                      invoiceForm?.invoiceDetail?.companyEmail
+                    )}
+                  </div>
+                </div>
+
+
+
+                {/* <p className="font-bold mb-2">
                   {invoiceForm?.companyDetail?.companyName || "Company Name"}
                 </p>
                 <p className="text-sm font-medium">
@@ -743,7 +826,8 @@ function InvoiceDetailScreen(props) {
                 <p className="text-sm font-medium">
                   {invoiceForm?.companyDetail?.companyEmail ||
                     "Company@email.com"}
-                </p>
+                </p> */}
+
               </div>
             </div>
             <div className="text-white font-title font-bold text-5xl mt-5 sm:mt-0">
@@ -781,7 +865,7 @@ function InvoiceDetailScreen(props) {
                       autoComplete="nope"
                       placeholder="Client Name"
                       className={defaultInputSmStyle}
-                      value={invoiceForm?.clientDetail?.name}
+                      // value={invoiceForm?.clientDetail?.name}
                       onChange={(e) => handlerInvoiceClientValue(e, "name")}
                     />
                   ) : (
@@ -798,13 +882,13 @@ function InvoiceDetailScreen(props) {
                       autoComplete="nope"
                       placeholder="Client Address"
                       className={defaultInputSmStyle}
-                      value={invoiceForm?.clientDetail?.billingAddress}
+                      // value={invoiceForm?.clientDetail?.billingAddress}
                       onChange={(e) =>
-                        handlerInvoiceClientValue(e, "billingAddress")
+                        handlerInvoiceClientValue(e, "clientAddress")
                       }
                     />
                   ) : (
-                    invoiceForm?.clientDetail?.billingAddress
+                    invoiceForm?.clientDetail?.clientAddress
                   )}
                 </div>
                 <div
@@ -817,7 +901,7 @@ function InvoiceDetailScreen(props) {
                       autoComplete="nope"
                       placeholder="Client Mobile"
                       className={defaultInputSmStyle}
-                      value={invoiceForm?.clientDetail?.mobileNo}
+                      // value={invoiceForm?.clientDetail?.mobileNo}
                       onChange={(e) => handlerInvoiceClientValue(e, "mobileNo")}
                     />
                   ) : (
@@ -834,7 +918,7 @@ function InvoiceDetailScreen(props) {
                       autoComplete="nope"
                       placeholder="Client Email"
                       className={defaultInputSmStyle}
-                      value={invoiceForm?.clientDetail?.email}
+                      // value={invoiceForm?.clientDetail?.email}
                       onChange={(e) => handlerInvoiceClientValue(e, "email")}
                     />
                   ) : (
@@ -852,7 +936,7 @@ function InvoiceDetailScreen(props) {
                       autoComplete="nope"
                       placeholder="Invoice No"
                       className={defaultInputSmStyle + " text-right"}
-                      value={invoiceForm.invoiceNo}
+                      // value={invoiceForm.invoiceNo}
                       onChange={(e) => handlerInvoiceValue(e, "invoiceNo")}
                     />
                   ) : (
@@ -902,7 +986,7 @@ function InvoiceDetailScreen(props) {
                       autoComplete="nope"
                       placeholder="Invoice No"
                       className={defaultInputSmStyle + " text-right"}
-                      value={invoiceForm.currencyUnit}
+                      // value={invoiceForm.currencyUnit}
                       onChange={(e) => handlerInvoiceValue(e, "currencyUnit")}
                     />
                   </div>
@@ -996,7 +1080,7 @@ function InvoiceDetailScreen(props) {
                     {!isViewMode ? (
                       <input
                         autoComplete="nope"
-                        value={product.name}
+                        // value={product.name}
                         placeholder="Product Name"
                         className={defaultInputSmStyle + " text-right"}
                         onChange={(e) =>
@@ -1030,7 +1114,7 @@ function InvoiceDetailScreen(props) {
                     {!isViewMode ? (
                       <input
                         autoComplete="nope"
-                        value={product.amount}
+                        // value={product.amount}
                         placeholder="Price"
                         type={"number"}
                         className={defaultInputSmStyle + " text-right"}
@@ -1041,7 +1125,7 @@ function InvoiceDetailScreen(props) {
                     ) : (
                       <span className="pr-3">
                         <NumberFormat
-                          value={product.amount}
+                          // value={product.amount}
                           className=""
                           displayType={"text"}
                           thousandSeparator={true}
@@ -1075,7 +1159,7 @@ function InvoiceDetailScreen(props) {
                     {!isViewMode ? (
                       <input
                         autoComplete="nope"
-                        value={product.quantity}
+                        // value={product.quantity}
                         type={"number"}
                         placeholder="Quantity"
                         className={defaultInputSmStyle + " text-right"}
@@ -1086,7 +1170,7 @@ function InvoiceDetailScreen(props) {
                     ) : (
                       <span className="pr-3">
                         <NumberFormat
-                          value={product.quantity}
+                          // value={product.quantity}
                           className=""
                           displayType={"text"}
                           thousandSeparator={true}
@@ -1472,7 +1556,7 @@ function InvoiceDetailScreen(props) {
             viewMode={isViewMode}
             onClickViewAs={toggleViewMode}
             onClickSetting={openSettingModal}
-            onClickExport={handleExport}
+            onClickExport={exportPdf}
             onClickDownloadImg={handleDownloadImg}
           />
         </div>
