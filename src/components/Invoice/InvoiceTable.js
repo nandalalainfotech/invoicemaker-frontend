@@ -10,13 +10,17 @@ import {
   defaultSearchStyle,
 } from "../../constants/defaultStyles";
 import ReactPaginate from "react-paginate";
-import { getAllInvoiceSelector, deleteInvoice } from "../../store/invoiceSlice";
+import { getAllInvoiceSelector, } from "../../store/invoiceSlice";
 import { useNavigate } from "react-router-dom";
 import NumberFormat from "react-number-format";
 import InvoiceIcon from "../Icons/InvoiceIcon";
 import { useAppContext } from "../../context/AppContext";
 import EmptyBar from "../Common/EmptyBar";
 import Axios from "axios";
+import invoiceListSlice, { userList } from "../../store/invoiceListSlice";
+import { deleteInvoice } from "../../store/deleteSlice";
+import { editInvoice } from "../../store/invoiceEditSlice";
+import { updateInvoice } from "../../store/invoiceUpdateSlice";
 
 // Example items, to simulate fetching from another resources.
 const itemsPerPage = 10;
@@ -30,26 +34,17 @@ function InvoiceTable({ showAdvanceSearch = false }) {
   const dispatch = useDispatch();
   const allInvoices = useSelector(getAllInvoiceSelector);
   const navigate = useNavigate();
-  const [items, setItems] = useState();
   const [searchForm, setSearchForm] = useState(emptySearchForm);
   const [currentItems, setCurrentItems] = useState([]);
-  // console.log("currentItems===>", currentItems)
   const [pageCount, setPageCount] = useState(0);
   const [itemOffset, setItemOffset] = useState(0);
-  const [detailInvoice, setDetailInvoice] = useState([]);
-
 
 
   const { user } = useSelector(state => state.user)
-  // console.log("user-------->", user)
-
   let userDetail = sessionStorage.getItem('user', JSON.stringify("user"));
 
-  console.log("userDetail-------->", userDetail.id)
 
   const invoDetail = JSON.parse(userDetail)
-  console.log("invoDetail--->>>", invoDetail);
-
   const invoices = useMemo(() => {
     let filterData = allInvoices.length > 0 ? [...allInvoices].reverse() : [];
     if (searchForm.invoiceNo?.trim()) {
@@ -81,10 +76,12 @@ function InvoiceTable({ showAdvanceSearch = false }) {
   // );
 
   const handleEdit = useCallback(
-    (item) => {
-      navigate("/invoices/" + item.id);
+    (item1) => {
+      dispatch(editInvoice(item1._id))
+      dispatch(updateInvoice(item1))
+      navigate("/invoices/" + item1._id);
     },
-    [navigate]
+    [navigate, dispatch]
   );
 
   const handlerSearchValue = useCallback((event, keyName) => {
@@ -97,13 +94,7 @@ function InvoiceTable({ showAdvanceSearch = false }) {
     setItemOffset(0);
   }, []);
 
-  // const detail = localStorage.getItem("details");
-
-  // const invoiceDetail = JSON.parse(detail);
-
   currentItems.push("getInvoicedetail")
-
-  // console.log("invoiceDetail------------->", invoiceDetail);
   useEffect(() => {
     // Fetch items from another resources.
     const endOffset = itemOffset + itemsPerPage;
@@ -112,23 +103,35 @@ function InvoiceTable({ showAdvanceSearch = false }) {
 
   }, [invoices, itemOffset]);
 
-  const getData = async () => {
-    const response = await Axios.get('http://localhost:8005/api/invoices/getInvoicedetail');
-    console.log("response------->", response)
-    setDetailInvoice(response.data)
-  }
+  // const getData = async () => {
+  //   const response = await Axios.get('/api/invoices/getInvoicedetail');
+  //   setDetailInvoice(response.data)
+  // }
 
-  useEffect(() => {
-    getData();
-  }, []);
 
   const handleDelete = useCallback(
     (id) => {
       dispatch(deleteInvoice(id._id))
+
     },
     [dispatch]
   )
   // setItems((prevItem) => prevItem.filter((item) => item.id !== id));
+
+  const invoicelist = useSelector((state) => state.userList)
+  const invoiceDetailList = invoicelist.userdetailList
+
+  console.log("item1---===0-=-", invoiceDetailList)
+
+
+  // const deletedID = useSelector((state) => state?.deleteSlice)
+  // const { error, id, loading, success } = deletedID;
+
+
+  useEffect(() => {
+    dispatch(userList())
+  }, [dispatch]);
+
 
 
   return (
@@ -196,21 +199,20 @@ function InvoiceTable({ showAdvanceSearch = false }) {
         </div>
 
         <div>
-          {
-            detailInvoice?.filter((item) => {
+          {invoiceDetailList
+            ?.filter((item) => {
               return item?.userid === invoDetail.id
-            })?.map((item) => (
-
-              console.log("item------------->>>", item),
-              <div className={defaultTdWrapperStyle} key={item?.id}>
+            })?.map((item1) => (
+              console.log("item33----->", item1),
+              < div className={defaultTdWrapperStyle} key={item1?.id}>
                 <div className={defaultTdStyle}>
                   <div className={defaultTdContentTitleStyle}>Invoice Name</div>
                   <div className={defaultTdContent}>
                     <span
                       className="whitespace-nowrap text-ellipsis overflow-hidden text-blue-500 cursor-pointer"
-                      onClick={() => handleEdit(item)}
+                      onClick={() => handleEdit(item1)}
                     >
-                      {item?.invoiceNo}
+                      {item1?.invoiceNo}
                     </span>
                   </div>
                 </div>
@@ -219,7 +221,7 @@ function InvoiceTable({ showAdvanceSearch = false }) {
                   <div className={defaultTdContentTitleStyle}>Client Name</div>
                   <div className={defaultTdContent}>
                     <span className="whitespace-nowrap text-ellipsis overflow-hidden">
-                      {item?.clientName}
+                      {item1?.clientName}
                     </span>
                   </div>
                 </div>
@@ -230,14 +232,14 @@ function InvoiceTable({ showAdvanceSearch = false }) {
                     <span
                       className={
                         "whitespace-nowrap text-ellipsis overflow-hidden px-3 rounded-xl  py-1 " +
-                        (item?.statusIndex === "2"
+                        (item1?.statusIndex === "2"
                           ? "bg-red-100 text-red-400"
-                          : item.statusIndex === "3"
+                          : item1.statusIndex === "3"
                             ? "bg-green-200 text-green-600"
                             : "bg-gray-100 text-gray-600 ")
                       }
                     >
-                      {item?.clientMobileNo}
+                      {item1?.clientMobileNo}
                     </span>
                   </div>
                 </div>
@@ -247,7 +249,7 @@ function InvoiceTable({ showAdvanceSearch = false }) {
                   <div className={defaultTdContent + " "}>
                     <span className="whitespace-nowrap text-ellipsis overflow-hidden ">
                       <NumberFormat
-                        value={item?.totalAmount}
+                        value={item1?.totalAmount}
                         className=""
                         displayType={"text"}
                         thousandSeparator={true}
@@ -255,7 +257,7 @@ function InvoiceTable({ showAdvanceSearch = false }) {
                           <span {...props}>{value}</span>
                         )}
                       />
-                      {item?.subTotal}
+                      {item1?.subTotal}
                     </span>
                   </div>
                 </div>
@@ -286,10 +288,10 @@ function InvoiceTable({ showAdvanceSearch = false }) {
                       }
                       transition
                     >
-                      <MenuItem onClick={() => handleEdit(item)}>
+                      <MenuItem onClick={() => handleEdit(item1)}>
                         Detail
                       </MenuItem>
-                      <MenuItem onClick={() => handleDelete(item)}>
+                      <MenuItem onClick={() => handleDelete(item1)}>
                         Delete
                       </MenuItem>
                     </Menu>
@@ -320,7 +322,7 @@ function InvoiceTable({ showAdvanceSearch = false }) {
             />
           )}
         </div>
-      </div>
+      </div >
     </>
   );
 }

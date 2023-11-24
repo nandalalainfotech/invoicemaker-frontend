@@ -14,6 +14,10 @@ export const defaultSkeletonLargeStyle = defaultSkeletonStyle + " h-12";
 export const defaultSkeletonNormalStyle = defaultSkeletonStyle + " h-10";
 export const defaultInputSmStyle =
   defaultStyle + "border-indigo-300 h-8 text-sm flex-1";
+
+export const InputSmStyle =
+  defaultStyle + "border-indigo-300 h-7 text-sm ";
+
 export const defaultInputSmInvalidStyle =
   defaultStyle + "border-red-400 h-8 text-sm flex-1";
 

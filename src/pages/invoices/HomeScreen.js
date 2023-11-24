@@ -58,8 +58,22 @@ import {
     sumTotalTaxes,
 } from "../../utils/match";
 import CheckCircleIcon from "../../components/Icons/CheckCircleIcon";
+import { useFieldArray, useForm } from "react-hook-form";
 
 function HomeScreen(props) {
+    const {
+        handleSubmit,
+        register,
+        reset,
+        control,
+        getValues,
+    } = useForm({
+        defaultValues: {
+            test:
+                [{ Desc: "", qty: "", Rating: "", Amount: "" }],
+        },
+        mode: "onChange",
+    })
     const { initLoading, showNavbar, toggleNavbar, setEscapeOverflow } =
         useAppContext();
     const params = useParams();
@@ -90,10 +104,19 @@ function HomeScreen(props) {
     const currentBg = useSelector(getCurrentBGImage);
     const currentColor = useSelector(getCurrentColor);
     const isConfirm = useSelector(getIsConfirm);
-
     const [invoiceForm, setInvoiceForm] = useState(null);
     const [isViewMode, setIsViewMode] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
+    const [creationDate, setCreationDate] = useState();
+    const [dueDate, setDueDate] = useState();
+    const [tax, setTax] = useState();
+    const [subTotals, setSubTotals] = useState();
+    const [total, setTotal] = useState();
+    const [discount, setDiscount] = useState();
+    const [shipping, setShipping] = useState();
+    const [balanceDue, setBalanceDue] = useState();
+    const [balance, setBalance] = useState();
+    const [amount, setAmount] = useState();
     const [statusData, setStatusData] = useState({
         statusName: "Draft",
         statusIndex: 1,
@@ -204,22 +227,88 @@ function HomeScreen(props) {
         });
     }, []);
 
-    const saveInvoiceDetail = async (e) => {
+    const { fields, append, remove } = useFieldArray({
+        control,
+        name: "test",
+    });
+
+    // const watchTest = useWatch({
+    //   control,
+    //   name: "test",
+    // });
+
+
+    const handleappendupdate = () => {
+        append({ Desc: "", qty: "", Rating: "", Amount: "" });
+    };
+
+    const handleChange = () => {
+        let subamount = 0;
+        const arr = getValues().test.map((item) => {
+            // console.log("item-------arrrrrrrrrrrr-----", item);
+            item.Amount = item.qty && item.Rating ? parseInt(item.qty) * parseInt(item.Rating) : 0;
+            subamount = subamount + item.Amount;
+            // console.log("subamount-------arrrrrrrrrrrr-----", subamount);
+        })
+        setSubTotals(subamount);
+    };
+
+    const handleDiscountValue = (e) => {
+        let dis = e.target.value;
+        let discount = dis / 100;
+        let discountvalue = subTotals - (subTotals * discount)
+        setTotal(discountvalue)
+        setDiscount(e.target.value)
+    }
+
+    const handleTaxValue = (e) => {
+        let discounts = discount / 100;
+        let discountvalue = subTotals - (subTotals * discounts)
+        let tax = (parseInt(e.target.value ? e.target.value : 0) / 100) * subTotals;
+        let calculate = discountvalue + tax
+        setTotal(calculate)
+        setTax(e.target.value)
+    }
+
+
+    const handleShipping = (e) => {
+        let discounts = discount / 100;
+        let discountvalue = subTotals - (subTotals * discounts)
+        let taxs = (tax / 100) * subTotals;
+        let calculate = discountvalue + taxs + parseInt(e.target.value);
+        setTotal(calculate)
+        setShipping(e.target.value)
+    }
+
+    const handlePaidAmount = (e) => {
+        let balance = total - e.target.value
+        setBalanceDue(balance)
+        setAmount(e.target.value)
+    }
+
+    const onSubmit = async (e) => {
         console.log("e--------------------->", e);
 
-        e.preventDefault();
+        // e.preventDefault();
         console.log("invoiceForm.clientDetail.name--------------------->", invoiceForm.clientDetail.name);
 
         const invoiceDetail = {
-            clientName: invoiceForm.clientDetail.name,
-            clientAddress: invoiceForm.clientDetail.billingAddress,
-            clientEmail: invoiceForm.clientDetail.email,
-            clientMobileNo: invoiceForm.clientDetail.mobileNo,
-            invoiceNo: invoiceForm.invoiceNo,
-            createdDate: invoiceForm.createdDate,
-            dueDate: invoiceForm.dueDate,
-            products: invoiceForm.products,
-            subTotal: invoiceForm.totalAmount
+            clientName: e.clientName,
+            clientAddress: e.clientAddress,
+            clientEmail: e.clientEmail,
+            clientNo: e.clientNo,
+            invoiceNo: e.invoiceNo,
+            changeCurrency: e.changeCurrency,
+            createdDate: creationDate,
+            Duedate: dueDate,
+            test: e.test,
+            Tax: tax,
+            Discount: discount,
+            shipping: shipping,
+            Balance: balanceDue,
+            Amount: amount,
+            Total: total,
+            subtotal: subTotals,
 
         }
 
@@ -676,7 +765,7 @@ function HomeScreen(props) {
     }, [dispatch, invoiceForm, isConfirm, navigate, params, statusData]);
 
     return (
-        <div>
+        <form onSubmit={handleSubmit(onSubmit)}>
             <div className="p-4">
                 <PageTitle
                     title={
@@ -766,6 +855,7 @@ function HomeScreen(props) {
                         </div>
                     </div>
                     {/* Background Image Finished */}
+
                     {/* Customer Billing Info */}
                     <div
                         className={
@@ -795,12 +885,12 @@ function HomeScreen(props) {
                                         <input
                                             autoComplete="nope"
                                             placeholder="Client Name"
+                                            {...register("clientName")}
                                             className={defaultInputSmStyle}
-                                            value={invoiceForm?.clientDetail?.name}
-                                            onChange={(e) => handlerInvoiceClientValue(e, "name")}
+                                        // onChange={(e) => handlerInvoiceClientValue(e, "name")}
                                         />
                                     ) : (
-                                        invoiceForm?.clientDetail?.name
+                                        invoiceForm?.clientDetail?.clientName
                                     )}
                                 </div>
                                 <div
@@ -813,7 +903,8 @@ function HomeScreen(props) {
                                             autoComplete="nope"
                                             placeholder="Client Address"
                                             className={defaultInputSmStyle}
-                                            value={invoiceForm?.clientDetail?.billingAddress}
+                                            {...register("clientAddress")}
+                                            // value={invoiceForm?.clientDetail?.billingAddress}
                                             onChange={(e) =>
                                                 handlerInvoiceClientValue(e, "billingAddress")
                                             }
@@ -831,8 +922,10 @@ function HomeScreen(props) {
                                         <input
                                             autoComplete="nope"
                                             placeholder="Client Mobile"
+                                            {...register("clientNo")}
+
                                             className={defaultInputSmStyle}
-                                            value={invoiceForm?.clientDetail?.mobileNo}
+                                            // value={invoiceForm?.clientDetail?.mobileNo}
                                             onChange={(e) => handlerInvoiceClientValue(e, "mobileNo")}
                                         />
                                     ) : (
@@ -847,9 +940,10 @@ function HomeScreen(props) {
                                     {!isViewMode ? (
                                         <input
                                             autoComplete="nope"
+                                            {...register("clientEmail")}
                                             placeholder="Client Email"
                                             className={defaultInputSmStyle}
-                                            value={invoiceForm?.clientDetail?.email}
+                                            // value={invoiceForm?.clientDetail?.email}
                                             onChange={(e) => handlerInvoiceClientValue(e, "email")}
                                         />
                                     ) : (
@@ -858,6 +952,7 @@ function HomeScreen(props) {
                                 </div>
                             </div>
                         </div>
+
                         <div className="flex-1">
                             <div className="flex flex-row justify-between items-center mb-1">
                                 <div className="font-title flex-1"> INVOICE # </div>
@@ -866,8 +961,10 @@ function HomeScreen(props) {
                                         <input
                                             autoComplete="nope"
                                             placeholder="Invoice No"
+                                            {...register("invoiceNo")}
+
                                             className={defaultInputSmStyle + " text-right"}
-                                            value={invoiceForm.invoiceNo}
+                                            // value={invoiceForm.invoiceNo}
                                             onChange={(e) => handlerInvoiceValue(e, "invoiceNo")}
                                         />
                                     ) : (
@@ -878,34 +975,31 @@ function HomeScreen(props) {
                             <div className="flex flex-row justify-between items-center mb-1">
                                 <div className="font-title flex-1"> Creation Date </div>
                                 <div className="font-title flex-1 text-right">
-                                    <DatePicker
-                                        selected={invoiceForm.createdDate}
-                                        onChange={(date) =>
-                                            handlerInvoiceValue(date.toISOString(), "createdDate")
-                                        }
-                                        disabled={true}
+                                    <input
+                                        type="date"
+                                        autoComplete="nope"
+                                        placeholder=""
                                         className={
-                                            !isViewMode
-                                                ? defaultInputSmStyle + " border-gray-300 text-right"
-                                                : " text-right bg-white"
+                                            " text-right text-right bg-white w-48 border-solid border-2 border-indigo-300 h-8 text-sm  rounded-xl focus:outline-none "
                                         }
+                                        onChange={(e) => setCreationDate(e.target.value)}
+                                        value={creationDate ? creationDate : ""}
                                     />
                                 </div>
                             </div>
                             <div className="flex flex-row justify-between items-center mb-1">
                                 <div className="font-title flex-1"> Due Date </div>
                                 <div className="font-title flex-1 text-right">
-                                    <DatePicker
-                                        selected={invoiceForm.dueDate}
-                                        onChange={(date) =>
-                                            handlerInvoiceValue(date.toISOString(), "dueDate")
-                                        }
-                                        disabled={isViewMode}
+                                    <input
+                                        type="date"
+                                        autoComplete="nope"
+                                        placeholder=""
                                         className={
-                                            !isViewMode
-                                                ? defaultInputSmStyle + " border-gray-300 text-right"
-                                                : " text-right bg-white"
+                                            " text-right text-right bg-white w-48 border-solid border-2 border-indigo-300 h-8 text-sm  rounded-xl focus:outline-none "
                                         }
+                                        onChange={(e) => setDueDate(e.target.value)}
+                                        value={dueDate ? dueDate : ""}
+
                                     />
                                 </div>
                             </div>
@@ -916,8 +1010,9 @@ function HomeScreen(props) {
                                         <input
                                             autoComplete="nope"
                                             placeholder="Invoice No"
+                                            {...register("changeCurrency")}
                                             className={defaultInputSmStyle + " text-right"}
-                                            value={invoiceForm.currencyUnit}
+                                            // value={invoiceForm.currencyUnit}
                                             onChange={(e) => handlerInvoiceValue(e, "currencyUnit")}
                                         />
                                     </div>
@@ -928,6 +1023,7 @@ function HomeScreen(props) {
                     {/* Customer Billing Info Finished */}
 
                     {/* Products */}
+
                     <div className="py-2 px-4">
                         <div
                             className={
@@ -979,210 +1075,246 @@ function HomeScreen(props) {
                             </div>
                         </div>
 
-                        {invoiceForm?.products?.map((product, index) => (
-                            <div
-                                key={`${index}_${product.id}`}
-                                className={
-                                    (isExporting
-                                        ? "flex flex-row rounded-lg w-full px-4 py-1 items-center relative text-sm"
-                                        : "flex flex-col sm:flex-row rounded-lg sm:visible w-full px-4 py-2 items-center relative") +
-                                    (index % 2 !== 0 ? " bg-gray-50 " : "")
-                                }
-                            >
-                                <div
-                                    className={
-                                        isExporting
-                                            ? "font-title w-1/4 text-right pr-8 flex flex-row block"
-                                            : "font-title w-full sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block"
-                                    }
-                                >
-                                    {!isExporting && (
-                                        <span className="sm:hidden w-1/2 flex flex-row items-center">
-                                            Description
-                                        </span>
-                                    )}
-                                    <span
-                                        className={
-                                            isExporting
-                                                ? "inline-block w-full mb-0"
-                                                : "inline-block w-1/2 sm:w-full mb-1 sm:mb-0"
-                                        }
-                                    >
-                                        {!isViewMode ? (
-                                            <input
-                                                autoComplete="nope"
-                                                value={product.name}
-                                                placeholder="Product Name"
-                                                className={defaultInputSmStyle + " text-right"}
-                                                onChange={(e) =>
-                                                    handlerProductValue(e, "name", product.id)
-                                                }
-                                            />
-                                        ) : (
-                                            <span className="pr-3">{product.name}</span>
-                                        )}
-                                    </span>
-                                </div>
-                                <div
-                                    className={
-                                        isExporting
-                                            ? "font-title w-1/4 text-right pr-8 flex flex-row block"
-                                            : "font-title w-full sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block"
-                                    }
-                                >
-                                    {!isExporting && (
-                                        <span className="sm:hidden w-1/2 flex flex-row items-center">
-                                            Price
-                                        </span>
-                                    )}
-                                    <span
-                                        className={
-                                            isExporting
-                                                ? "inline-block w-full mb-0"
-                                                : "inline-block w-1/2 sm:w-full mb-1 sm:mb-0"
-                                        }
-                                    >
-                                        {!isViewMode ? (
-                                            <input
-                                                autoComplete="nope"
-                                                value={product.amount}
-                                                placeholder="Price"
-                                                type={"number"}
-                                                className={defaultInputSmStyle + " text-right"}
-                                                onChange={(e) =>
-                                                    handlerProductValue(e, "amount", product.id)
-                                                }
-                                            />
-                                        ) : (
-                                            <span className="pr-3">
-                                                <NumberFormat
-                                                    value={product.amount}
-                                                    className=""
-                                                    displayType={"text"}
-                                                    thousandSeparator={true}
-                                                    renderText={(value, props) => (
-                                                        <span {...props}>{value}</span>
-                                                    )}
-                                                />
-                                            </span>
-                                        )}
-                                    </span>
-                                </div>
-                                <div
-                                    className={
-                                        isExporting
-                                            ? "font-title w-1/4 text-right pr-8 flex flex-row block"
-                                            : "font-title w-full sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block"
-                                    }
-                                >
-                                    {!isExporting && (
-                                        <span className="sm:hidden w-1/2 flex flex-row items-center">
-                                            Quantity
-                                        </span>
-                                    )}
-                                    <span
-                                        className={
-                                            isExporting
-                                                ? "inline-block w-full mb-0"
-                                                : "inline-block w-1/2 sm:w-full mb-1 sm:mb-0"
-                                        }
-                                    >
-                                        {!isViewMode ? (
-                                            <input
-                                                autoComplete="nope"
-                                                value={product.quantity}
-                                                type={"number"}
-                                                placeholder="Quantity"
-                                                className={defaultInputSmStyle + " text-right"}
-                                                onChange={(e) =>
-                                                    handlerProductValue(e, "quantity", product.id)
-                                                }
-                                            />
-                                        ) : (
-                                            <span className="pr-3">
-                                                <NumberFormat
-                                                    value={product.quantity}
-                                                    className=""
-                                                    displayType={"text"}
-                                                    thousandSeparator={true}
-                                                    renderText={(value, props) => (
-                                                        <span {...props}>{value}</span>
-                                                    )}
-                                                />
-                                            </span>
-                                        )}
-                                    </span>
-                                </div>
-                                <div
-                                    className={
-                                        isExporting
-                                            ? "font-title w-1/4 text-right pr-9 flex flex-row `1block"
-                                            : "font-title w-full sm:w-1/4 text-right sm:pr-9 flex flex-row sm:block"
-                                    }
-                                >
-                                    {!isExporting && (
-                                        <span className="sm:hidden w-1/2 flex flex-row items-center">
-                                            Total
-                                        </span>
-                                    )}
-
-                                    <span
-                                        className={
-                                            isExporting
-                                                ? "inline-block w-full "
-                                                : "inline-block w-1/2 sm:w-full"
-                                        }
-                                    >
-                                        <NumberFormat
-                                            value={
-                                                Number.isInteger(product.quantity * product.amount)
-                                                    ? product.quantity * product.amount
-                                                    : (product.quantity * product.amount)
-                                                        .toFixed(4)
-                                                        .toString()
-                                                        .slice(0, -2)
-                                            }
-                                            className=""
-                                            displayType={"text"}
-                                            thousandSeparator={true}
-                                            renderText={(value, props) => (
-                                                <span {...props}>{value}</span>
-                                            )}
-                                        />{" "}
-                                        {invoiceForm?.currencyUnit}
-                                    </span>
-                                </div>
-                                {!isViewMode && (
+                        {fields ? (<>
+                            {fields.map(({ id }, index) => {
+                                return (
                                     <div
-                                        className="w-full sm:w-10 sm:absolute sm:right-0"
-                                        onClick={() => onDeleteProduct(product.id)}
+                                        className={
+                                            (isExporting
+                                                ? "flex flex-row rounded-lg w-full px-4 py-1 items-center relative text-sm"
+                                                : "flex flex-col sm:flex-row rounded-lg sm:visible w-full px-4 py-2 items-center relative") +
+                                            (" bg-gray-50 ")
+                                        }
                                     >
-                                        <div className="w-full text-red-500 font-title h-8 sm:h-8 sm:w-8 cursor-pointer rounded-2xl bg-red-200 mr-2 flex justify-center items-center">
-                                            <DeleteIcon className="h-4 w-4" style={IconStyle} />
-                                            <span className="block sm:hidden">Delete Product</span>
+                                        <div
+                                            className={
+                                                isExporting
+                                                    ? "font-title w-1/4 text-right pr-8 flex flex-row block"
+                                                    : "font-title w-full sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block"
+                                            }
+                                        >
+                                            {!isExporting && (
+                                                <span className="sm:hidden w-1/2 flex flex-row items-center">
+                                                    Description
+                                                </span>
+                                            )}
+                                            <span
+                                                className={
+                                                    isExporting
+                                                        ? "inline-block w-full mb-0"
+                                                        : "inline-block w-1/2 sm:w-full mb-1 sm:mb-0"
+                                                }
+                                            >
+                                                {!isViewMode ? (
+                                                    <input
+                                                        autoComplete="nope"
+                                                        // value={product.name}
+                                                        name={`test.${index}.Desc`}
+                                                        {...register(`test.${index}.Desc`, {
+                                                            required: false,
+                                                        })}
+                                                        placeholder="Product Name"
+                                                        className={defaultInputSmStyle + " text-right"}
+
+                                                    />
+                                                ) : (
+                                                    <span className="pr-3"></span>
+                                                )}
+                                            </span>
                                         </div>
+                                        <div
+                                            className={
+                                                isExporting
+                                                    ? "font-title w-1/4 text-right pr-8 flex flex-row block"
+                                                    : "font-title w-full sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block"
+                                            }
+                                        >
+                                            {!isExporting && (
+                                                <span className="sm:hidden w-1/2 flex flex-row items-center">
+                                                    Price
+                                                </span>
+                                            )}
+                                            <span
+                                                className={
+                                                    isExporting
+                                                        ? "inline-block w-full mb-0"
+                                                        : "inline-block w-1/2 sm:w-full mb-1 sm:mb-0"
+                                                }
+                                            >
+                                                {!isViewMode ? (
+                                                    <input
+                                                        autoComplete="nope"
+                                                        // value={product.amount}
+                                                        {...register(`test.${index}.Rating`, {
+                                                            required: false,
+                                                        })}
+                                                        name={`test.${index}.Rating`}
+                                                        placeholder="Price"
+                                                        type={"number"}
+                                                        className={defaultInputSmStyle + " text-right"}
+
+                                                    />
+                                                ) : (
+                                                    <span className="pr-3">
+                                                        <NumberFormat
+                                                            // value={product.amount}
+                                                            className=""
+                                                            displayType={"text"}
+                                                            thousandSeparator={true}
+                                                            renderText={(value, props) => (
+                                                                <span {...props}>{value}</span>
+                                                            )}
+                                                        />
+                                                    </span>
+                                                )}
+                                            </span>
+                                        </div>
+                                        <div
+                                            className={
+                                                isExporting
+                                                    ? "font-title w-1/4 text-right pr-8 flex flex-row block"
+                                                    : "font-title w-full sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block"
+                                            }
+                                        >
+                                            {!isExporting && (
+                                                <span className="sm:hidden w-1/2 flex flex-row items-center">
+                                                    Quantity
+                                                </span>
+                                            )}
+                                            <span
+                                                className={
+                                                    isExporting
+                                                        ? "inline-block w-full mb-0"
+                                                        : "inline-block w-1/2 sm:w-full mb-1 sm:mb-0"
+                                                }
+                                            >
+                                                {!isViewMode ? (
+                                                    <input
+                                                        autoComplete="nope"
+                                                        // value={product.quantity}
+                                                        type={"number"}
+                                                        placeholder="Quantity"
+                                                        className={defaultInputSmStyle + " text-right"}
+                                                        {...register(`test.${index}.qty`, {
+                                                            required: false,
+                                                            pattern: {
+                                                                value: /^[1-9]\d*(\d+)?$/i,
+                                                                message: "Please enter an integer",
+                                                            },
+                                                        })}
+                                                        name={`test.${index}.qty`}
+                                                    />
+                                                ) : (
+                                                    <span className="pr-3">
+                                                        <NumberFormat
+                                                            // value={product.quantity}
+                                                            className=""
+                                                            displayType={"text"}
+                                                            thousandSeparator={true}
+                                                            renderText={(value, props) => (
+                                                                <span {...props}>{value}</span>
+                                                            )}
+                                                        />
+                                                    </span>
+                                                )}
+                                            </span>
+                                        </div>
+                                        <div
+                                            className={
+                                                isExporting
+                                                    ? "font-title w-1/4 text-right pr-9 flex flex-row `1block"
+                                                    : "font-title w-full sm:w-1/4 text-right sm:pr-9 flex flex-row sm:block"
+                                            }
+                                        >
+                                            {/* {!isExporting && (
+                        <span className="sm:hidden w-1/2 flex flex-row items-center"
+                        >
+                          Total
+                        </span>
+                      )}
+
+                      <span
+                        className={
+                          isExporting
+                            ? "inline-block w-full "
+                            : "inline-block w-1/2 sm:w-full"
+                        }
+                      >
+                        <NumberFormat
+                          name={`test.${index}.Amount`}
+                          value={getValues().test[index].Amount}
+                          className=""
+                          displayType={"text"}
+
+                        // thousandSeparator={true}
+                        // renderText={(value, props) => (
+                        //   <span {...props}>{value}</span>
+                        // )}
+                        /> */}
+                                            {/* {invoiceForm?.currencyUnit} */}
+                                            {/* </span> */}
+                                            <span
+                                                className={
+                                                    isExporting
+                                                        ? "inline-block w-full mb-0"
+                                                        : "inline-block w-1/2 sm:w-full mb-1 sm:mb-0"
+                                                }
+                                            >
+                                                {!isViewMode ? (
+                                                    <input
+                                                        autoComplete="nope"
+                                                        // value={product.quantity}
+                                                        placeholder="Total"
+                                                        className={defaultInputSmStyle + " text-right"}
+                                                        name={`test.${index}.Amount`}
+                                                        {...register(`test.${index}.Amount`)}
+                                                        value={getValues().test[index].Amount}
+                                                    />
+                                                ) : (
+                                                    <span className="pr-3">
+                                                    </span>
+                                                )}
+                                            </span>
+                                        </div>
+                                        {!isViewMode && (
+                                            <div
+                                                className="w-full sm:w-10 sm:absolute sm:right-0"
+
+                                            >
+                                                <div className="w-full text-red-500 font-title h-8 sm:h-8 sm:w-8 cursor-pointer rounded-2xl bg-red-200 mr-2 flex justify-center items-center">
+                                                    <DeleteIcon className="h-4 w-4" style={IconStyle} onClick={() => remove(index)} />
+                                                    <span className="block sm:hidden">Delete Product</span>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
-                                )}
-                            </div>
-                        ))}
+                                );
+                            }
+                            )}
+                        </>) : (<>
+                        </>)}
+
+
 
                         {/* Add Product Actions */}
-                        {!isViewMode && (
-                            <div className="flex flex-col sm:flex-row rounded-lg sm:visible w-full px-4 py-2 items-center sm:justify-end">
-                                <div className="font-title w-full sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block mb-1">
-                                    <Button size="sm" block={1} onClick={addEmptyProduct}>
-                                        <PlusCircleIcon style={IconStyle} className="h-5 w-5" />
-                                        Add Empty Product
-                                    </Button>
+                        {
+                            !isViewMode && (
+                                <div className="flex flex-col sm:flex-row rounded-lg sm:visible w-full px-4 py-2 items-center sm:justify-end">
+                                    <div className="font-title w-full sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block mb-1">
+                                        <Button size="sm" block={1} onClick={handleappendupdate}  >
+                                            <PlusCircleIcon style={IconStyle} className="h-5 w-5" />
+                                            Add Empty Product
+                                        </Button>
+                                    </div>
+                                    <div className="font-title w-full sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block mb-1">
+                                        <Button size="sm" block={1} onClick={openChooseProduct}>
+                                            <InvoiceIcon style={IconStyle} className="w-5 h-5" />
+                                            Add Exisiting Product
+                                        </Button>
+                                    </div>
                                 </div>
-                                <div className="font-title w-full sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block mb-1">
-                                    <Button size="sm" block={1} onClick={openChooseProduct}>
-                                        <InvoiceIcon style={IconStyle} className="w-5 h-5" />
-                                        Add Exisiting Product
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
+                            )
+                        }
                         {/* Add Product Actions Finished*/}
 
                         {/* Subtotal Start */}
@@ -1199,6 +1331,7 @@ function HomeScreen(props) {
                                         ? "font-title w-1/4 text-right pr-9 flex flex-row block justify-end text-sm "
                                         : "font-title w-1/2 sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block mb-1 sm:mb-0"
                                 }
+
                             >
                                 Subtotal
                             </div>
@@ -1210,172 +1343,220 @@ function HomeScreen(props) {
                                 }
                             >
                                 <NumberFormat
-                                    value={subTotal}
+                                    value={subTotals ? subTotals : ""}
                                     className="inline-block"
                                     displayType={"text"}
-                                    thousandSeparator={true}
-                                    renderText={(value, props) => (
-                                        <span {...props}>
-                                            {value} {invoiceForm?.currencyUnit}
-                                        </span>
-                                    )}
                                 />
                             </div>
                         </div>
                         {/* Subtotal Finished */}
 
-                        {/* Taxes */}
-                        {invoiceForm?.taxes?.map((tax, index) => (
+                        {/* discount */}
+                        <div
+                            className={
+                                isExporting
+                                    ? "flex flex-row rounded-lg w-full px-4 py-1 justify-end items-end relative text-sm"
+                                    : "flex flex-row sm:flex-row sm:justify-end rounded-lg sm:visible w-full px-4 py-1 items-center "
+                            }
+                        >
+
                             <div
-                                key={`${index}_${tax.id}`}
                                 className={
                                     isExporting
-                                        ? "flex flex-row justify-end rounded-lg w-full px-4 py-1 items-center relative"
-                                        : "flex flex-col sm:flex-row sm:justify-end rounded-lg sm:visible w-full px-4 py-1 items-center relative"
+                                        ? "font-title w-1/4 text-right pr-9 flex flex-row block justify-end text-sm "
+                                        : "font-title w-1/2 sm:w-1/4 text-right sm:pr-9 flex flex-row justify-end sm:block mb-1"
                                 }
                             >
-                                <div
-                                    className={
-                                        isExporting
-                                            ? "font-title w-3/5 text-right pr-8 flex flex-row block"
-                                            : "font-title w-full sm:w-3/5 text-right sm:pr-8 flex flex-row sm:block"
-                                    }
-                                >
-                                    {!isExporting && (
-                                        <div className="sm:hidden w-1/3 flex flex-row items-center">
-                                            Tax Type
-                                        </div>
-                                    )}
-                                    <div
-                                        className={
-                                            isExporting
-                                                ? "w-full mb-0 flex flex-row items-center justify-end"
-                                                : "w-2/3 sm:w-full mb-1 sm:mb-0 flex flex-row items-center sm:justify-end"
-                                        }
-                                    >
-                                        <div
-                                            className={
-                                                isExporting ? "w-1/3 pr-1" : "w-1/2 sm:w-1/3 pr-1"
-                                            }
-                                        >
-                                            {!isViewMode && (
-                                                <input
-                                                    autoComplete="nope"
-                                                    value={tax.title}
-                                                    type={"text"}
-                                                    placeholder="Tax Title"
-                                                    className={defaultInputSmStyle + " text-right"}
-                                                    onChange={(e) =>
-                                                        handlerTaxesValue(e, "title", tax.id)
-                                                    }
-                                                />
-                                            )}
-                                        </div>
-                                        <div
-                                            className={
-                                                (isExporting
-                                                    ? "w-1/3 relative flex flex-row items-center text-sm"
-                                                    : "w-1/2 sm:w-1/3 relative flex flex-row items-center") +
-                                                (isViewMode ? " justify-end" : " pr-4")
-                                            }
-                                        >
-                                            {!isViewMode ? (
-                                                <>
-                                                    <input
-                                                        autoComplete="nope"
-                                                        value={tax.value}
-                                                        type={"number"}
-                                                        placeholder="Percentage"
-                                                        className={defaultInputSmStyle + " text-right"}
-                                                        onChange={(e) =>
-                                                            handlerTaxesValue(e, "value", tax.id)
-                                                        }
-                                                    />
-                                                    <span className="ml-1">
-                                                        {tax.type === "percentage"
-                                                            ? "%"
-                                                            : invoiceForm.currencyUnit}
-                                                    </span>
-                                                </>
-                                            ) : (
-                                                <div className="text-right">{tax.title}</div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div
-                                    className={
-                                        isExporting
-                                            ? "font-title w-1/4 text-right pr-9 flex flex-row text-sm"
-                                            : "font-title w-full sm:w-1/4 text-right sm:pr-9 flex flex-row sm:block"
-                                    }
-                                >
-                                    {!isExporting && (
-                                        <span className="sm:hidden w-1/2 flex flex-row items-center">
-                                            Amount
-                                        </span>
-                                    )}
-                                    <span
-                                        className={
-                                            isExporting
-                                                ? "inline-block w-full"
-                                                : "inline-block w-1/2 sm:w-full"
-                                        }
-                                    >
-                                        <>
-                                            <div className="w-full">
-                                                <NumberFormat
-                                                    value={
-                                                        tax.type === "percentage"
-                                                            ? totalPercentTax
-                                                            : tax.amount
-                                                    }
-                                                    className=""
-                                                    displayType={"text"}
-                                                    thousandSeparator={true}
-                                                    renderText={(value, props) => (
-                                                        <span {...props}>
-                                                            {value} {invoiceForm?.currencyUnit}
-                                                        </span>
-                                                    )}
-                                                />
-                                            </div>
-                                        </>
-                                    </span>
-                                </div>
-                                {!isViewMode && (
-                                    <div
-                                        className="w-full sm:w-10 sm:absolute sm:right-0"
-                                        onClick={() => onDeleteTax(tax.id)}
-                                    >
-                                        <div className="w-full text-red-500 font-title h-8 sm:h-8 sm:w-8 cursor-pointer rounded-2xl bg-red-200 mr-2 flex justify-center items-center">
-                                            <DeleteIcon className="h-4 w-4" style={IconStyle} />
-                                            <span className="block sm:hidden">Delete Tax</span>
-                                        </div>
-                                    </div>
-                                )}
+                                <input
+                                    className={defaultInputSmStyle + " text-right"}
+                                    value={"Discount"}
+                                />
                             </div>
-                        ))}
-                        {/* Taxes Finished*/}
+                            <div
+                                className={
+                                    isExporting
+                                        ? "font-title w-1/4 text-right pr-9 flex flex-row block justify-end text-sm "
+                                        : "font-title w-1/2 sm:w-1/4 text-right sm:pr-9 flex flex-row justify-end sm:block mb-1"
+                                }
+                            >
+                                <input
+                                    autoComplete="nope"
+                                    type={"number"}
+                                    placeholder="discount"
+                                    className={defaultInputSmStyle + " text-right"}
+                                    onChange={(e) => handleDiscountValue(e)}
+                                    value={discount ? discount : ""}
+                                />
+                            </div>
+                        </div>
+                        {/* discount finished*/}
 
-                        {/* Add Tax Action */}
-                        {!isViewMode && (
-                            <div className="flex flex-col sm:flex-row rounded-lg sm:visible w-full px-4 py-2 items-center sm:justify-end">
-                                <div className="font-title w-full sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block mb-1">
-                                    <Button size="sm" block={1} onClick={addPercentageTax}>
-                                        <TaxesIcon style={IconStyle} className="h-5 w-5" />
-                                        Add Taxes (%)
-                                    </Button>
-                                </div>
-                                <div className="font-title w-full sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block mb-1">
-                                    <Button size="sm" block={1} onClick={addEmptyTax}>
-                                        <DollarIcon style={IconStyle} className="w-5 h-5" />
-                                        Add Extra Fee
-                                    </Button>
-                                </div>
+                        {/* Taxes */}
+                        <div
+                            className={
+                                isExporting
+                                    ? "flex flex-row rounded-lg w-full px-4 py-1 justify-end items-end relative text-sm"
+                                    : "flex flex-row sm:flex-row sm:justify-end rounded-lg sm:visible w-full px-4 py-1 items-center "
+                            }
+                        >
+                            <div
+                                className={
+                                    isExporting
+                                        ? "font-title w-1/4 text-right pr-9 flex flex-row block justify-end text-sm "
+                                        : "font-title w-1/2 sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block mb-1 sm:mb-0"
+                                }
+
+                            >
+                                <input
+                                    className={defaultInputSmStyle + " text-right"}
+                                    value={"Tax %"}
+                                />
                             </div>
-                        )}
-                        {/* Add Tax Action Finished*/}
+                            <div
+                                className={
+                                    isExporting
+                                        ? "font-title w-1/4 text-right pr-9 flex flex-row block justify-end text-sm "
+                                        : "font-title w-1/2 sm:w-1/4 text-right sm:pr-9 flex flex-row justify-end sm:block mb-1"
+                                }
+                            >
+                                <input
+                                    autoComplete="nope"
+                                    type={"number"}
+                                    placeholder="Percentage"
+                                    className={defaultInputSmStyle + " text-right"}
+                                    onChange={(e) => handleTaxValue(e)}
+                                    value={tax ? tax : ""}
+                                />
+                            </div>
+                        </div>
+                        {/* Taxes finished*/}
+
+                        {/* shipping */}
+                        <div
+                            className={
+                                isExporting
+                                    ? "flex flex-row rounded-lg w-full px-4 py-1 justify-end items-end relative text-sm"
+                                    : "flex flex-row sm:flex-row sm:justify-end rounded-lg sm:visible w-full px-4 py-1 items-center "
+                            }
+                        >
+                            <div
+                                className={
+                                    isExporting
+                                        ? "font-title w-1/4 text-right pr-9 flex flex-row block justify-end text-sm "
+                                        : "font-title w-1/2 sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block mb-1 sm:mb-0"
+                                }
+
+                            >
+                                <input
+                                    className={defaultInputSmStyle + " text-right"}
+                                    value={"Shipping"}
+                                />
+                            </div>
+                            <div
+                                className={
+                                    isExporting
+                                        ? "font-title w-1/4 text-right pr-9 flex flex-row block justify-end text-sm "
+                                        : "font-title w-1/2 sm:w-1/4 text-right sm:pr-9 flex flex-row justify-end sm:block mb-1"
+                                }
+                            >
+                                <input
+                                    autoComplete="nope"
+                                    type={"number"}
+                                    placeholder="Percentage"
+                                    className={defaultInputSmStyle + " text-right"}
+                                    onChange={(e) => handleShipping(e)}
+                                    value={shipping ? shipping : ""}
+                                />
+                            </div>
+                        </div>
+                        {/* shipping finished*/}
+
+
+                        {/*  Amount Paid */}
+                        <div
+                            className={
+                                isExporting
+                                    ? "flex flex-row rounded-lg w-full px-4 py-1 justify-end items-end relative text-sm"
+                                    : "flex flex-row sm:flex-row sm:justify-end rounded-lg sm:visible w-full px-4 py-1 items-center "
+                            }
+                        >
+                            <div
+                                className={
+                                    isExporting
+                                        ? "font-title w-1/4 text-right pr-9 flex flex-row block justify-end text-sm "
+                                        : "font-title w-1/2 sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block mb-1 sm:mb-0"
+                                }
+
+                            >
+                                <input
+                                    className={defaultInputSmStyle + " text-right"}
+                                    value={"Amount Paid"}
+                                />
+                            </div>
+                            <div
+                                className={
+                                    isExporting
+                                        ? "font-title w-1/4 text-right pr-9 flex flex-row block justify-end text-sm "
+                                        : "font-title w-1/2 sm:w-1/4 text-right sm:pr-9 flex flex-row justify-end sm:block mb-1"
+                                }
+                            >
+                                <input
+                                    autoComplete="nope"
+                                    type={"number"}
+                                    placeholder="Percentage"
+                                    className={defaultInputSmStyle + " text-right"}
+                                    onChange={(e) => handlePaidAmount(e)}
+                                    value={amount ? amount : ""}
+                                />
+                            </div>
+                        </div>
+                        {/*  Amount Paid finished*/}
+
+                        {/*  Balance Due Paid */}
+                        <div
+                            className={
+                                isExporting
+                                    ? "flex flex-row rounded-lg w-full px-4 py-1 justify-end items-end relative text-sm"
+                                    : "flex flex-row sm:flex-row sm:justify-end rounded-lg sm:visible w-full px-4 py-1 items-center "
+                            }
+                        >
+                            <div
+                                className={
+                                    isExporting
+                                        ? "font-title w-1/4 text-right pr-9 flex flex-row block justify-end text-sm "
+                                        : "font-title w-1/2 sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block mb-1 sm:mb-0"
+                                }
+                            >
+
+                                <input
+                                    className={defaultInputSmStyle + " text-right"}
+                                    // value={" Balance Due"}
+                                    {...register("balance")}
+                                    onChange={(e) => setBalance(e.target.value)}
+                                />
+
+                            </div>
+                            <div
+                                className={
+                                    isExporting
+                                        ? "font-title w-1/4 text-right pr-9 flex flex-row block justify-end text-sm "
+                                        : "font-title w-1/2 sm:w-1/4 text-right sm:pr-9 flex flex-row justify-end sm:block mb-1"
+                                }
+                            >
+                                <input
+                                    autoComplete="nope"
+                                    type={"number"}
+                                    placeholder="Percentage"
+                                    className={defaultInputSmStyle + " text-right"}
+                                    onChange={(e) => setBalanceDue(e.target.value)}
+                                    value={balanceDue ? balanceDue : ""}
+                                />
+                            </div>
+                        </div>
+                        {/*  Balance Due finished*/}
+
+
+
 
                         {/* Subtotal Start */}
                         <div
@@ -1408,20 +1589,15 @@ function HomeScreen(props) {
                                             ? "font-title text-lg w-1/2 text-right pr-9 flex flex-row block  justify-end items-center"
                                             : "font-title text-lg w-1/2 text-right sm:pr-9 flex flex-row justify-end sm:block items-center"
                                     }
+
                                 >
                                     <NumberFormat
-                                        value={invoiceForm?.totalAmount}
+
                                         className=""
                                         displayType={"text"}
                                         thousandSeparator={true}
-                                        renderText={(value, props) => (
-                                            <span {...props}>
-                                                {value}{" "}
-                                                <span className={isExporting ? "text-sm" : "text-base"}>
-                                                    {invoiceForm?.currencyUnit}
-                                                </span>
-                                            </span>
-                                        )}
+                                        onChange={(e) => setTotal(e.target.value)}
+                                        value={total ? total : ""}
                                     />
                                 </div>
                             </div>
@@ -1464,7 +1640,8 @@ function HomeScreen(props) {
                                     size="sm"
                                     block={1}
                                     success={1}
-                                    onClick={(e) => { saveInvoiceDetail(e) }}
+                                    type="submit"
+                                // onClick={(e) => { saveInvoiceDetail(e) }}
                                 >
                                     <SecurityIcon className="h-5 w-5 mr-1" />{" "}
                                     {params.id !== "new" ? "Save" : "Update"} As Paid
@@ -1475,54 +1652,8 @@ function HomeScreen(props) {
                 </div>
             )}
 
-            {invoiceForm && invoiceForm?.statusIndex !== "3" && (
-                <div className="px-4 pt-3">
-                    <div className="bg-white rounded-xl px-3 py-3">
-                        <div className="flex flex-col flex-wrap sm:flex-row">
-                            {params.id === "new" && (
-                                <div className="w-full flex-1 my-1 sm:my-1 md:my-0 px-1">
-                                    <Button
-                                        outlined={1}
-                                        size="sm"
-                                        block={1}
-                                        secondary={1}
-                                        onClick={() => saveAs("Draft")}
-                                    >
-                                        <CheckCircleIcon className="h-5 w-5 mr-1" /> Save As Draft
-                                    </Button>
-                                </div>
-                            )}
-                            {invoiceForm?.statusIndex !== "2" && (
-                                <div className="w-full flex-1 my-1 sm:my-1 md:my-0 px-1">
-                                    <Button
-                                        outlined={1}
-                                        size="sm"
-                                        block={1}
-                                        danger={1}
-                                        onClick={() => saveAs("Unpaid")}
-                                    >
-                                        <DollarIcon className="h-5 w-5 mr-1" />{" "}
-                                        {params.id === "new" ? "Save" : "Update"} As Unpaid
-                                    </Button>
-                                </div>
-                            )}
-                            <div className="w-full flex-1 my-1 sm:my-1 md:my-0 px-1">
-                                <Button
-                                    size="sm"
-                                    block={1}
-                                    success={1}
-                                    onClick={() => saveAs("Paid")}
-                                >
-                                    <SecurityIcon className="h-5 w-5 mr-1" />{" "}
-                                    {params.id === "new" ? "Save" : "Update"} As Paid
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
 
-            {invoiceForm && (
+            {/* {invoiceForm && (
                 <div className="p-4">
                     <InvoiceTopBar
                         onClickBack={goInvoiceList}
@@ -1533,8 +1664,8 @@ function HomeScreen(props) {
                         onClickDownloadImg={handleDownloadImg}
                     />
                 </div>
-            )}
-        </div>
+            )} */}
+        </form>
     );
 }
 

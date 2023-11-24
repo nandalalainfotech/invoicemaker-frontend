@@ -58,7 +58,8 @@ const initialState = {
 export const InvoiceUserdetails = createAsyncThunk(
   'invoice/UserInvoicedetails',
   async (invoices) => {
-    console.log("invoicedetail------11111111-->", invoices);
+    console.log("clientDetail2222222222222222222=====>", invoices)
+
     const request = await Axios.post('/api/invoices/invoicedetail', invoices);
     const response = await request.data;
     return response
@@ -66,18 +67,10 @@ export const InvoiceUserdetails = createAsyncThunk(
 );
 
 
-export const deleteInvoice = createAsyncThunk(
-  'invoice/deleteinvoice',
-  async (id) => {
-    console.log("register-------->", id);
-    const request = await Axios.delete(`/api/invoices/deleteInvoice/${id}`);
-    const response = await request.data;
-    return response
-  }
-);
+
 
 export const InvoiceListPDF = () => async (dispatch) => {
-    const  data  = await Axios.get(`/api/invoices/downloadALLPDF/`);
+  const data = await Axios.get(`/api/invoices/downloadALLPDF/`);
 };
 
 // export const signIn = signIn({

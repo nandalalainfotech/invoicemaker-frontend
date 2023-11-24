@@ -100,12 +100,15 @@ function Navbar() {
           </motion.div>
         )}
       </div>
-      <div className="font-title w-full sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block mb-1">
-        <Button size="sm" block={1} onClick={singIn}>
-          {/* <PlusCircleIcon style={IconStyle} className="h-5 w-5" /> */}
-          Sign In
-        </Button>
-      </div>
+      {userDetail ? (<></>) : (<>
+        <div className="font-title w-full sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block mb-1">
+          <Button size="sm" block={1} onClick={singIn}>
+            {/* <PlusCircleIcon style={IconStyle} className="h-5 w-5" /> */}
+            Sign In
+          </Button>
+        </div>
+      </>)}
+
     </header>
   );
 }

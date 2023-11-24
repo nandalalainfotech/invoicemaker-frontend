@@ -20,7 +20,7 @@ const initialState = {
 
 export const ClientUser = createAsyncThunk(
   'client/ClientUser',
-  async (clientregister) => { 
+  async (clientregister) => {
     const request = await Axios.post('/api/clients/ClientUser', clientregister);
     const response = await request.data;
     return response
@@ -44,7 +44,7 @@ export const clientsSlice = createSlice({
         billingAddress: "",
         mobileNo: "",
       };
-      
+
       state.newForm = { ...reNewForm };
       // localforage.setItem(CLIENT_FORM_KEY, reNewForm);
     },

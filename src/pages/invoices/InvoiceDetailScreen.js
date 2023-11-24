@@ -1,77 +1,107 @@
+import domtoimage from "dom-to-image";
+import { nanoid } from "nanoid";
 import React, {
   useCallback,
   useEffect,
-  useMemo,
-  useState,
   useRef,
+  useState
 } from "react";
-import Axios from "axios";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
-import { useNavigate, useParams } from "react-router-dom";
 import DatePicker from "react-datepicker";
-import { useReactToPrint } from "react-to-print";
-import { useDispatch, useSelector } from "react-redux";
+import { useFieldArray, useForm } from "react-hook-form";
 import NumberFormat from "react-number-format";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate, useParams } from "react-router-dom";
+import { useReactToPrint } from "react-to-print";
 import { toast } from "react-toastify";
-import domtoimage from "dom-to-image";
+import Swal from 'sweetalert2';
+import Button from "../../components/Button/Button";
+import PageTitle from "../../components/Common/PageTitle";
+import ClientPlusIcon from "../../components/Icons/ClientPlusIcon";
+import DeleteIcon from "../../components/Icons/DeleteIcon";
+import InvoiceIcon from "../../components/Icons/InvoiceIcon";
+import PlusCircleIcon from "../../components/Icons/PlusCircleIcon";
+import SecurityIcon from "../../components/Icons/SecurityIcon";
 import InvoiceTopBar from "../../components/Invoice/InvoiceTopBar";
+import { IconStyle, InputSmStyle, defaultInputSmStyle } from "../../constants/defaultStyles";
+import { useAppContext } from "../../context/AppContext";
+
 import {
+  getSelectedClient,
+  setOpenClientSelector,
+} from "../../store/clientSlice";
+import { getCompanyData } from "../../store/companySlice";
+import { userList } from "../../store/invoiceListSlice";
+import {
+  InvoiceUserdetails,
   getAllInvoiceDetailSelector,
   getCurrentBGImage,
   getCurrentColor,
   getInvoiceNewForm,
   getIsConfirm,
-  setConfirmModalOpen,
   setDefaultBackground,
   setDefaultColor,
   setIsConfirm,
   setNewInvoices,
   setSettingModalOpen,
   updateExisitingInvoiceForm,
-  updateNewInvoiceForm,
-  InvoiceUserdetails,
+  updateNewInvoiceForm
 } from "../../store/invoiceSlice";
-import {
-  getSelectedClient,
-  setOpenClientSelector,
-} from "../../store/clientSlice";
-import { getCompanyData } from "../../store/companySlice";
-import { defaultInputSmStyle, IconStyle } from "../../constants/defaultStyles";
-import Button from "../../components/Button/Button";
-import ClientPlusIcon from "../../components/Icons/ClientPlusIcon";
-import InvoiceIcon from "../../components/Icons/InvoiceIcon";
-import PlusCircleIcon from "../../components/Icons/PlusCircleIcon";
-import { nanoid } from "nanoid";
-import DeleteIcon from "../../components/Icons/DeleteIcon";
 import {
   getSelectedProduct,
   setOpenProductSelector,
 } from "../../store/productSlice";
-import { useAppContext } from "../../context/AppContext";
-import TaxesIcon from "../../components/Icons/TaxesIcon";
-import DollarIcon from "../../components/Icons/DollarIcon";
-import CheckCircleIcon from "../../components/Icons/CheckCircleIcon";
-import SecurityIcon from "../../components/Icons/SecurityIcon";
 import {
   getTotalTaxesWithPercent,
   sumProductTotal,
   sumTotalAmount,
   sumTotalTaxes,
 } from "../../utils/match";
-import PageTitle from "../../components/Common/PageTitle";
-import Container from "../../components/Container/Container";
-import fileDownload from"js-file-download"
-import Swal from 'sweetalert2';
+import Axios from "axios";
+import fileDownload from "js-file-download"
+import { updateInvoice } from "../../store/invoiceUpdateSlice";
+
 function InvoiceDetailScreen(props) {
+  const invoiceId = useSelector((state) => state?.editInvoice)
+  const { item1 } = invoiceId
+
+  const {
+    handleSubmit,
+    register,
+    reset,
+    control,
+    getValues,
+  } = useForm({
+    defaultValues: {
+      clientName: '',
+      clientAddress: "",
+      clientEmail: "",
+      clientNo: "",
+      invoiceNo: "",
+      changeCurrency: "",
+      createdDate: "",
+      dueDate: "",
+      products: "",
+      subTotal: "",
+      taxes: "",
+      userid: "",
+      Tax: "",
+      discount: "",
+      shipping: "",
+      balanceDue: "",
+      amount: "",
+      total: "",
+      test:
+        item1?.test ? item1?.test : [{ Desc: "", qty: "", Rating: "", Amount: "" },
+        ],
+      balance: "balanceDue"
+    },
+    mode: "onChange",
+  })
   const { initLoading, showNavbar, toggleNavbar, setEscapeOverflow } =
     useAppContext();
   const params = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-
-  const fileDownload = require("js-file-download");
-  // const pdfRef = useRef();
 
   const componentRef = useRef(null);
   const reactToPrintContent = useCallback(() => {
@@ -87,10 +117,11 @@ function InvoiceDetailScreen(props) {
     removeAfterPrint: true,
   });
 
-  // const detail = localStorage.getItem("details");
+  let userDetail = sessionStorage.getItem('user');
+  let userId = JSON.parse(userDetail)
 
-  // const invoiceDetail = JSON.parse(detail)
 
+  // const EditId = item1?._id;
   const invoiceNewForm = useSelector(getInvoiceNewForm);
   const allInvoiceDetails = useSelector(getAllInvoiceDetailSelector);
   const company = useSelector(getCompanyData);
@@ -99,26 +130,68 @@ function InvoiceDetailScreen(props) {
   const currentBg = useSelector(getCurrentBGImage);
   const currentColor = useSelector(getCurrentColor);
   const isConfirm = useSelector(getIsConfirm);
-
   const [invoiceForm, setInvoiceForm] = useState(null);
-
   const [isViewMode, setIsViewMode] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  const [templateName, setTemplateName] = useState("Create-template");
+  const [tax, setTax] = useState(item1?.Tax);
+  const [subTotals, setSubTotals] = useState(item1?.subtotal);
+  const [total, setTotal] = useState(item1?.Total);
+  const [discount, setDiscount] = useState(item1?.Discount);
+  const [shipping, setShipping] = useState(item1?.shipping);
+  const [balanceDue, setBalanceDue] = useState(item1?.Balance);
+  const [amount, setAmount] = useState(item1?.Amount);
+  const [balance, setBalance] = useState();
+  const [companyName, setCompanyName] = useState(item1?.CompanyName);
+  const [addCompany, setAddCompany] = useState(item1?.Company);
+  const [email, setEmail] = useState(item1?.Email)
+  const [mobileNo, setmobileNo] = useState(item1?.MobileNo);
+  const [creationDate, setCreationDate] = useState(item1?.createdDate);
+  const [dueDate, setDueDate] = useState(item1?.Duedate);
+
+
+  useEffect(() => {
+    setTax(item1?.Tax)
+    setDiscount(item1?.Discount)
+    setShipping(item1?.shipping)
+    setBalanceDue(item1?.Balance)
+    setAmount(item1?.Amount)
+    setSubTotals(item1?.subtotal)
+    setTotal(item1?.Total)
+    setCompanyName(item1?.CompanyName)
+    setAddCompany(item1?.Company)
+    setEmail(item1?.Email)
+    setmobileNo(item1?.MobileNo)
+    setCreationDate(item1?.createdDate)
+    setDueDate(item1?.Duedate)
+  }, [item1])
+
   const [statusData, setStatusData] = useState({
     statusName: "Draft",
     statusIndex: 1,
   });
 
+  // const handleExport = useCallback(() => {
+  //   if (showNavbar) {
+  //     toggleNavbar();
+  //   }
+  //   setEscapeOverflow(true);
+  //   setIsViewMode(true);
+  //   setIsExporting(true);
+  //   setTimeout(() => {
+  //     handlePrint();
+  //   }, 3000);
+  // }, [handlePrint, setEscapeOverflow, showNavbar, toggleNavbar]);
+  const fileDownload = require("js-file-download");
+
   const exportPdf = () => {
-    Axios.get(`/api/invoices/downloadALLPDF/`, {
+    Axios.get(`/api/invoices/downloadALLPDF`, {
       responseType: "blob",
       headers: {
         "Content-Type": "application/pdf",
       },
-    }).then((response) => { 
+    }).then((res) => {
       const link = document.createElement("a");
-      fileDownload(response.data, "InvoiceSearchExport.pdf");
+      fileDownload(res.data, "InvoiceSearchExport.pdf");
       link.download = "output.pdf";
       link.click();
     });
@@ -184,173 +257,17 @@ function InvoiceDetailScreen(props) {
     dispatch(setOpenProductSelector(true));
   }, [dispatch]);
 
-  const addEmptyProduct = useCallback(() => {
-    const emptyProduct = {
-      id: nanoid(),
-      name: "",
-      productID: "",
-      amount: 1,
-      quantity: 1,
-    };
-
-    setInvoiceForm((prev) => {
-      let updatedData = { ...prev };
-      const updateProducts = [...prev.products, emptyProduct];
-      const subTotalAmount = sumProductTotal(updateProducts);
-      const updateTaxes = getTotalTaxesWithPercent(prev.taxes, subTotalAmount);
-      updatedData.products = updateProducts;
-      updatedData.taxes = updateTaxes;
-      updatedData.totalAmount = sumTotalAmount(
-        subTotalAmount,
-        sumTotalTaxes(updateTaxes)
-      );
-      return updatedData;
-    });
-  }, []);
-
-  const onDeleteProduct = useCallback((prodID) => {
-    setInvoiceForm((prev) => {
-      let updatedData = { ...prev };
-      const updateProducts = prev.products.filter((prod) => prod.id !== prodID);
-      const subTotalAmount = sumProductTotal(updateProducts);
-      const updateTaxes = getTotalTaxesWithPercent(prev.taxes, subTotalAmount);
-      updatedData.products = updateProducts;
-      updatedData.taxes = updateTaxes;
-      updatedData.totalAmount = sumTotalAmount(
-        subTotalAmount,
-        sumTotalTaxes(updateTaxes)
-      );
-      return updatedData;
-    });
-  }, []);
-
   const handlerInvoiceValue = useCallback((event, keyName) => {
     const value =
       typeof event === "string" ? new Date(event) : event?.target?.value;
-
     setInvoiceForm((prev) => {
       return { ...prev, [keyName]: value };
     });
   }, []);
 
-  const handlerProductValue = useCallback(
-    (event, keyName, productID) => {
-      const value = event.target.value;
-
-      // If Keyname Price or Quantity must be only number
-      if (keyName === "quantity") {
-        if (!`${value}`.match(/^\d+$/)) {
-          return;
-        }
-      }
-
-      if (keyName === "amount") {
-        if (!`${value}`.match(/^[0-9]\d*(\.\d+)?$/)) {
-          return;
-        }
-      }
-
-      // Quantity Zero Case
-      if ((keyName === "quantity" || keyName === "amount") && value <= 0) {
-        return;
-      }
-
-      let updatedData = { ...invoiceForm };
-      let updateProducts = [...invoiceForm.products];
-
-      const isFindIndex = updateProducts.findIndex(
-        (prod) => prod.id === productID
-      );
-
-      if (isFindIndex !== -1) {
-        updateProducts[isFindIndex] = {
-          ...updateProducts[isFindIndex],
-          [keyName]: value,
-        };
-
-        updatedData.products = [...updateProducts];
-      }
-
-      if (keyName === "quantity" || keyName === "amount") {
-        const subTotalAmount = sumProductTotal(updateProducts);
-        const updateTaxes = getTotalTaxesWithPercent(
-          invoiceForm.taxes,
-          subTotalAmount
-        );
-        updatedData.taxes = updateTaxes;
-        updatedData.totalAmount = sumTotalAmount(
-          subTotalAmount,
-          sumTotalTaxes(updateTaxes)
-        );
-      }
-      setInvoiceForm(updatedData);
-    },
-    [invoiceForm]
-  );
-
-  const handlerTaxesValue = useCallback(
-    (event, keyName, taxID) => {
-      const value = event.target.value;
-      let updateTaxes = [...invoiceForm.taxes];
-      const isFindIndex = updateTaxes.findIndex((prod) => prod.id === taxID);
-      if (isFindIndex === -1) {
-        return;
-      }
-      const currentTax = updateTaxes[isFindIndex];
-
-      if (currentTax.type === "percentage" && keyName === "value") {
-        if (!`${value}`.match(/^[0-9]\d*(\.\d+)?$/)) {
-          return;
-        }
-
-        if (value <= 0 || value > 100) {
-          return;
-        }
-      }
-
-      if (currentTax.type === "flat" && keyName === "value") {
-        if (!`${value}`.match(/^[0-9]\d*(\.\d+)?$/)) {
-          return;
-        }
-
-        if (value <= 0) {
-          return;
-        }
-      }
-
-      setInvoiceForm((prev) => {
-        let taxes = [...prev.taxes];
-
-        if (keyName === "value") {
-          const subTotalAmount = sumProductTotal(prev.products);
-          const amount = (value / 100) * subTotalAmount;
-          taxes[isFindIndex] = {
-            ...taxes[isFindIndex],
-            [keyName]: value,
-            amount: currentTax.type !== "percentage" ? value : amount,
-          };
-          const totalAmount = sumTotalAmount(
-            subTotalAmount,
-            sumTotalTaxes(taxes)
-          );
-          return { ...prev, taxes: taxes, totalAmount: totalAmount };
-        } else {
-          taxes[isFindIndex] = {
-            ...taxes[isFindIndex],
-            [keyName]: value,
-          };
-          return { ...prev, taxes: taxes };
-        }
-      });
-    },
-    [invoiceForm]
-  );
 
   const handlerInvoiceClientValue = useCallback((event, keyName) => {
-
-
     const value = typeof event === "string" ? new Date(event) : event?.target?.value;
-
     setInvoiceForm((prev) => {
       return {
         ...prev,
@@ -360,129 +277,75 @@ function InvoiceDetailScreen(props) {
     });
   }, []);
 
-  // Calculation for Showing
-  const subTotal = useMemo(() => {
-    if (!invoiceForm) {
-      return 0;
-    }
 
-    if (!invoiceForm?.products) {
-      return 0;
-    }
-    return sumProductTotal(invoiceForm.products);
-  }, [invoiceForm]);
+  // console.log("EditId=====8899>", EditId)
 
-  const totalPercentTax = useMemo(() => {
-    const isSomeTax = invoiceForm?.taxes?.some(
-      (tax) => tax.type === "percentage"
-    );
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "test",
+  });
 
-    if (!isSomeTax) {
-      return 0;
-    }
+  // const watchTest = useWatch({
+  //   control,
+  //   name: "test",
+  // });
 
-    const findIndex = invoiceForm?.taxes?.findIndex(
-      (tax) => tax.type === "percentage"
-    );
 
-    return findIndex !== -1
-      ? Number.isInteger(invoiceForm.taxes[findIndex].amount)
-        ? invoiceForm.taxes[findIndex].amount
-        : invoiceForm.taxes[findIndex].amount.toFixed(4).toString().slice(0, -2)
-      : 0;
-  }, [invoiceForm]);
+  const handleappendupdate = () => {
+    append({ Desc: "", qty: "", Rating: "", Amount: "" });
+  };
 
-  const addPercentageTax = useCallback(() => {
-    const isSomeTaxes = invoiceForm?.taxes?.some(
+  const handleChange = () => {
+    let subamount = 0;
+    const arr = getValues().test.map((item) => {
+      // console.log("item-------arrrrrrrrrrrr-----", item);
+      item.Amount = item.qty && item.Rating ? parseInt(item.qty) * parseInt(item.Rating) : 0;
+      subamount = subamount + item.Amount;
+      // console.log("subamount-------arrrrrrrrrrrr-----", subamount);
+    })
+    setSubTotals(subamount);
+  };
 
-      (form) => form.type === "percentage"
-    );
+  const handleDiscountValue = (e) => {
+    let dis = e.target.value;
+    let discount = dis / 100;
+    let discountvalue = subTotals - (subTotals * discount)
+    setTotal(discountvalue)
+    setDiscount(e.target.value)
+  }
 
-    if (isSomeTaxes) {
-      toast.error("Already Have Percentage Taxes!", {
-        position: "bottom-center",
-        autoClose: 2000,
-      });
-      return;
-    }
+  const handleTaxValue = (e) => {
+    let discounts = discount / 100;
+    let discountvalue = subTotals - (subTotals * discounts)
+    let tax = (parseInt(e.target.value ? e.target.value : 0) / 100) * subTotals;
+    let calculate = discountvalue + tax
+    setTotal(calculate)
+    setTax(e.target.value)
+  }
 
-    setInvoiceForm((prev) => {
-      const subTotalAmount = sumProductTotal(prev.products);
-      const amount = (10 / 100) * subTotalAmount;
-      const percentageTax = {
-        id: nanoid(),
-        title: "Tax %",
-        type: "percentage",
-        value: 10,
-        amount,
-      };
-      const updateTaxes = [percentageTax, ...prev.taxes];
-      const totalAmount = sumTotalAmount(
-        subTotalAmount,
-        sumTotalTaxes(updateTaxes)
-      );
 
-      return {
-        ...prev,
-        taxes: updateTaxes,
-        totalAmount: totalAmount,
-      };
-    });
-  }, [invoiceForm]);
+  const handleShipping = (e) => {
+    let discounts = discount / 100;
+    let discountvalue = subTotals - (subTotals * discounts)
+    let taxs = (tax / 100) * subTotals;
+    let calculate = discountvalue + taxs + parseInt(e.target.value);
+    setTotal(calculate)
+    setShipping(e.target.value)
+  }
 
-  const addEmptyTax = useCallback(() => {
-    setInvoiceForm((prev) => {
-      const subTotalAmount = sumProductTotal(prev.products);
-      const emptyTax = {
-        id: nanoid(),
-        title: "Extra Fees",
-        type: "flat",
-        value: 1,
-        amount: 1,
-      };
-      const updateTaxes = [...prev.taxes, emptyTax];
-      const totalAmount = sumTotalAmount(
-        subTotalAmount,
-        sumTotalTaxes(updateTaxes)
-      );
-      return { ...prev, taxes: updateTaxes, totalAmount };
-    });
-  }, []);
-
-  const onDeleteTax = useCallback((taxID) => {
-    setInvoiceForm((prev) => {
-      const updateTaxes = prev.taxes.filter((prod) => prod.id !== taxID);
-      let updatedData = { ...prev, taxes: updateTaxes };
-      const subTotalAmount = sumProductTotal(prev.products);
-      const totalAmount = sumTotalAmount(
-        subTotalAmount,
-        sumTotalTaxes(updateTaxes)
-      );
-      updatedData.totalAmount = totalAmount;
-      return updatedData;
-    });
-  }, []);
-
-  const saveAs = useCallback(
-    (status) => {
-      setStatusData({
-        statusIndex: status === "Draft" ? "1" : status === "Unpaid" ? "2" : "3",
-        statusName: status,
-      });
-      dispatch(setConfirmModalOpen(true));
-    },
-    [dispatch]
-  );
+  const handlePaidAmount = (e) => {
+    let balance = total - e.target.value
+    setBalanceDue(balance)
+    setAmount(e.target.value)
+  }
 
   const saveInvoiceDetail = async (e) => {
-
     e.preventDefault();
-
     const invoiceDetail = {
-      companyName:invoiceForm.companyDetail.companyName,
-      billingAddress:invoiceForm.companyDetail.billingAddress,
-      companyEmail:invoiceForm.companyDetail.companyEmail,
-      companyMobile:invoiceForm.companyDetail.companyMobile,
+      companyName: invoiceForm.companyDetail.companyName,
+      billingAddress: invoiceForm.companyDetail.billingAddress,
+      companyEmail: invoiceForm.companyDetail.companyEmail,
+      companyMobile: invoiceForm.companyDetail.companyMobile,
       clientName: invoiceForm.clientDetail.name,
       clientAddress: invoiceForm.clientDetail.clientAddress,
       clientEmail: invoiceForm.clientDetail.email,
@@ -492,24 +355,103 @@ function InvoiceDetailScreen(props) {
       dueDate: invoiceForm.dueDate,
       products: invoiceForm.products,
       subTotal: invoiceForm.totalAmount
-
     }
+  };
 
+  const onSubmit = async (e) => {
 
-    dispatch(InvoiceUserdetails(invoiceDetail)).then((result) => {
-      if (result.payload) {
-        Swal.fire('Invoice Details Saved Successfully');
-        // navigate('/')
+    if (params.id) {
+      let editId = params.id;
+      console.log("e.clientName", params.id);
+
+      const clientDetail = {
+        clientName: e.clientName,
+        clientAddress: e.clientAddress,
+        clientEmail: e.clientEmail,
+        clientNo: e.clientNo,
+        invoiceNo: e.invoiceNo,
+        changeCurrency: e.changeCurrency,
+        createdDate: creationDate,
+        Duedate: dueDate,
+        test: e.test,
+        Tax: tax,
+        Discount: discount,
+        shipping: shipping,
+        Balance: balanceDue,
+        Amount: amount,
+        Total: total,
+        subtotal: subTotals,
+        Email: email,
+        MobileNo: mobileNo,
+        Company: addCompany,
+        CompanyName: companyName,
+        userid: userId.id,
+
       }
 
-    })
-    // try {
-    //   const response = await Axios.post('http://localhost:8000/api/invoices', invoiceDetail);
-    //   console.log("res------->", response.data);
-    // } catch (error) {
-    //   console.error(error);
-    // }
+
+      dispatch(updateInvoice({ clientDetail, editId }))
+
+      // Swal.fire('Invoice Details Updated Successfully');
+
+    } else {
+      const clientDetail = {
+        clientName: e.clientName,
+        clientAddress: e.clientAddress,
+        clientEmail: e.clientEmail,
+        clientNo: e.clientNo,
+        invoiceNo: e.invoiceNo,
+        changeCurrency: e.changeCurrency,
+        createdDate: creationDate,
+        Duedate: dueDate,
+        test: e.test,
+        Tax: tax,
+        Discount: discount,
+        shipping: shipping,
+        Balance: balanceDue,
+        Amount: amount,
+        Total: total,
+        subtotal: subTotals,
+        Email: email,
+        MobileNo: mobileNo,
+        Company: addCompany,
+        CompanyName: companyName,
+        userid: userId.id,
+
+      }
+      console.log("clientDetail=====>2", clientDetail)
+
+      dispatch(InvoiceUserdetails(clientDetail)).then((result) => {
+        if (result.payload) {
+          Swal.fire('Invoice Details Saved Successfully');
+          // navigate('/')
+          dispatch(userList());
+        }
+      })
+    }
+
   }
+
+  useEffect(() => {
+    if (params.id !== "new") {
+      console.log("item1 =====>", item1)
+      let defaultValues = {
+        clientName: item1?.clientName,
+        clientAddress: item1?.clientAddress,
+        clientEmail: item1?.clientEmail,
+        clientNo: item1?.clientNo,
+        invoiceNo: item1?.invoiceNo,
+        changeCurrency: item1?.changeCurrency,
+        createdDate: item1?.createdDate,
+        dueDate: item1?.dueDate,
+        test: item1?.test,
+      }
+      reset({
+        ...defaultValues,
+      })
+    }
+  }, [params.id, item1])
+
 
   const goInvoiceList = useCallback(() => {
     // navigate("/invoices");
@@ -667,9 +609,11 @@ function InvoiceDetailScreen(props) {
     }
   }, [dispatch, invoiceForm, isConfirm, navigate, params, statusData]);
 
-  return (
 
-    <div>
+  // console.log("ite1--------------->", item1);
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
       <div className="p-4">
         <PageTitle
           title={
@@ -702,6 +646,7 @@ function InvoiceDetailScreen(props) {
           id="InvoiceWrapper"
           ref={componentRef}
           style={isExporting ? { width: 1200 } : {}}
+          onChange={handleChange}
         >
           {/* Background Image */}
           <div
@@ -734,100 +679,45 @@ function InvoiceDetailScreen(props) {
               <div
                 className={
                   isExporting
-                    ? "text-white font-title text-left"
-                    : "text-white font-title text-center sm:text-left"
+                    ? " font-title text-left"
+                    : " font-title text-center sm:text-left"
                 }
               >
-                <div className="client-form-wrapper sm:w-1/2">
-                  <div
-                    className={
-                      "font-medium " + (isExporting ? "text-xs" : "text-sm mb-1")
-                    }
-                  >
-                    {!isViewMode ? (
-                      <input
-                        autoComplete="nope"
-                        placeholder="Company Name"
-                        className={defaultInputSmStyle} style={{width:"300px",color:"black"}}
-                        // value={invoiceForm?.clientDetail?.name}
-                        onChange={(e) => handlerInvoiceClientValue(e, "companyName")}
-                      />
-                    ) : (
-                      invoiceForm?.invoiceDetail?.companyName
-                    )}
-                  </div>
-                  <div
-                    className={
-                      "font-medium " + (isExporting ? "text-xs" : "text-sm mb-1")
-                    }
-                  >
-                    {!isViewMode ? (
-                      <input
-                        autoComplete="nope"
-                        placeholder="Company Address"
-                        className={defaultInputSmStyle} style={{width:"300px",color:"black"}}
-                        // value={invoiceForm?.clientDetail?.billingAddress}
-                        onChange={(e) =>
-                          handlerInvoiceClientValue(e, "billingAddress")
-                        }
-                      />
-                    ) : (
-                      invoiceForm?.invoiceDetail?.billingAddress
-                    )}
-                  </div>
-                  <div
-                    className={
-                      "font-medium " + (isExporting ? "text-xs" : "text-sm mb-1")
-                    }
-                  >
-                    {!isViewMode ? (
-                      <input
-                        autoComplete="nope"
-                        placeholder="Company Mobile No"
-                        className={defaultInputSmStyle} style={{width:"300px",color:"black"}}
-                        // value={invoiceForm?.clientDetail?.mobileNo}
-                        onChange={(e) => handlerInvoiceClientValue(e, "companyMobile")}
-                      />
-                    ) : (
-                      invoiceForm?.invoiceDetail?.companyMobile
-                    )}
-                  </div>
-                  <div
-                    className={
-                      "font-medium " + (isExporting ? "text-xs" : "text-sm mb-1")
-                    }
-                  >
-                    {!isViewMode ? (
-                      <input
-                        autoComplete="nope"
-                        placeholder="Company Email"
-                        className={defaultInputSmStyle} style={{width:"300px",color:"black"}}
-                        // value={invoiceForm?.clientDetail?.email}
-                        onChange={(e) => handlerInvoiceClientValue(e, "companyEmail")}
-                      />
-                    ) : (
-                      invoiceForm?.invoiceDetail?.companyEmail
-                    )}
-                  </div>
-                </div>
+                <input
+
+                  placeholder="Company Name"
+                  className={InputSmStyle + "text-sm font-medium "}
+                  style={{ marginBottom: "5px" }}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  value={companyName ? companyName : ""}
+                />
+                <input
+
+                  placeholder="Plz add First Company Data"
+                  className={InputSmStyle + "text-sm font-medium "}
+                  style={{ marginBottom: "5px" }}
+                  onChange={(e) => setAddCompany(e.target.value)}
+                  value={addCompany ? addCompany : ""}
+
+                />
+                <input
+
+                  placeholder="Company Phone"
+                  className={InputSmStyle + "text-sm font-medium"}
+                  style={{ marginBottom: "5px" }}
+                  onChange={(e) => setmobileNo(e.target.value)}
+                  value={mobileNo ? mobileNo : ""}
+
+                />
+                <input
+                  autoComplete="nope"
+                  placeholder=" Company@email.com"
+                  className={InputSmStyle + "text-sm font-medium"}
+                  onChange={(e) => setEmail(e.target.value)}
+                  value={email ? email : ""}
 
 
-
-                {/* <p className="font-bold mb-2">
-                  {invoiceForm?.companyDetail?.companyName || "Company Name"}
-                </p>
-                <p className="text-sm font-medium">
-                  {invoiceForm?.companyDetail?.billingAddress ||
-                    "Plz add First Company Data"}
-                </p>
-                <p className="text-sm font-medium">
-                  {invoiceForm?.companyDetail?.companyMobile || "Company Ph"}
-                </p>
-                <p className="text-sm font-medium">
-                  {invoiceForm?.companyDetail?.companyEmail ||
-                    "Company@email.com"}
-                </p> */}
-
+                />
               </div>
             </div>
             <div className="text-white font-title font-bold text-5xl mt-5 sm:mt-0">
@@ -835,6 +725,7 @@ function InvoiceDetailScreen(props) {
             </div>
           </div>
           {/* Background Image Finished */}
+
           {/* Customer Billing Info */}
           <div
             className={
@@ -864,12 +755,12 @@ function InvoiceDetailScreen(props) {
                     <input
                       autoComplete="nope"
                       placeholder="Client Name"
+                      {...register("clientName")}
                       className={defaultInputSmStyle}
-                      // value={invoiceForm?.clientDetail?.name}
-                      onChange={(e) => handlerInvoiceClientValue(e, "name")}
+                    // onChange={(e) => handlerInvoiceClientValue(e, "name")}
                     />
                   ) : (
-                    invoiceForm?.clientDetail?.name
+                    item1?.clientName
                   )}
                 </div>
                 <div
@@ -882,13 +773,14 @@ function InvoiceDetailScreen(props) {
                       autoComplete="nope"
                       placeholder="Client Address"
                       className={defaultInputSmStyle}
+                      {...register("clientAddress")}
                       // value={invoiceForm?.clientDetail?.billingAddress}
                       onChange={(e) =>
-                        handlerInvoiceClientValue(e, "clientAddress")
+                        handlerInvoiceClientValue(e, "billingAddress")
                       }
                     />
                   ) : (
-                    invoiceForm?.clientDetail?.clientAddress
+                    invoiceForm?.clientDetail?.billingAddress
                   )}
                 </div>
                 <div
@@ -900,6 +792,8 @@ function InvoiceDetailScreen(props) {
                     <input
                       autoComplete="nope"
                       placeholder="Client Mobile"
+                      {...register("clientNo")}
+
                       className={defaultInputSmStyle}
                       // value={invoiceForm?.clientDetail?.mobileNo}
                       onChange={(e) => handlerInvoiceClientValue(e, "mobileNo")}
@@ -916,6 +810,7 @@ function InvoiceDetailScreen(props) {
                   {!isViewMode ? (
                     <input
                       autoComplete="nope"
+                      {...register("clientEmail")}
                       placeholder="Client Email"
                       className={defaultInputSmStyle}
                       // value={invoiceForm?.clientDetail?.email}
@@ -927,6 +822,7 @@ function InvoiceDetailScreen(props) {
                 </div>
               </div>
             </div>
+
             <div className="flex-1">
               <div className="flex flex-row justify-between items-center mb-1">
                 <div className="font-title flex-1"> INVOICE # </div>
@@ -935,6 +831,8 @@ function InvoiceDetailScreen(props) {
                     <input
                       autoComplete="nope"
                       placeholder="Invoice No"
+                      {...register("invoiceNo")}
+
                       className={defaultInputSmStyle + " text-right"}
                       // value={invoiceForm.invoiceNo}
                       onChange={(e) => handlerInvoiceValue(e, "invoiceNo")}
@@ -947,34 +845,31 @@ function InvoiceDetailScreen(props) {
               <div className="flex flex-row justify-between items-center mb-1">
                 <div className="font-title flex-1"> Creation Date </div>
                 <div className="font-title flex-1 text-right">
-                  <DatePicker
-                    selected={invoiceForm.createdDate}
-                    onChange={(date) =>
-                      handlerInvoiceValue(date.toISOString(), "createdDate")
-                    }
-                    disabled={true}
+                  <input
+                    type="date"
+                    autoComplete="nope"
+                    placeholder=""
                     className={
-                      !isViewMode
-                        ? defaultInputSmStyle + " border-gray-300 text-right"
-                        : " text-right bg-white"
+                      " text-right text-right bg-white w-48 border-solid border-2 border-indigo-300 h-8 text-sm  rounded-xl focus:outline-none "
                     }
+                    onChange={(e) => setCreationDate(e.target.value)}
+                    value={creationDate ? creationDate : ""}
                   />
                 </div>
               </div>
               <div className="flex flex-row justify-between items-center mb-1">
                 <div className="font-title flex-1"> Due Date </div>
                 <div className="font-title flex-1 text-right">
-                  <DatePicker
-                    selected={invoiceForm.dueDate}
-                    onChange={(date) =>
-                      handlerInvoiceValue(date.toISOString(), "dueDate")
-                    }
-                    disabled={isViewMode}
+                  <input
+                    type="date"
+                    autoComplete="nope"
+                    placeholder=""
                     className={
-                      !isViewMode
-                        ? defaultInputSmStyle + " border-gray-300 text-right"
-                        : " text-right bg-white"
+                      " text-right text-right bg-white w-48 border-solid border-2 border-indigo-300 h-8 text-sm  rounded-xl focus:outline-none "
                     }
+                    onChange={(e) => setDueDate(e.target.value)}
+                    value={dueDate ? dueDate : ""}
+
                   />
                 </div>
               </div>
@@ -985,6 +880,7 @@ function InvoiceDetailScreen(props) {
                     <input
                       autoComplete="nope"
                       placeholder="Invoice No"
+                      {...register("changeCurrency")}
                       className={defaultInputSmStyle + " text-right"}
                       // value={invoiceForm.currencyUnit}
                       onChange={(e) => handlerInvoiceValue(e, "currencyUnit")}
@@ -997,6 +893,7 @@ function InvoiceDetailScreen(props) {
           {/* Customer Billing Info Finished */}
 
           {/* Products */}
+
           <div className="py-2 px-4">
             <div
               className={
@@ -1048,210 +945,246 @@ function InvoiceDetailScreen(props) {
               </div>
             </div>
 
-            {invoiceForm?.products?.map((product, index) => (
-              <div
-                key={`${index}_${product.id}`}
-                className={
-                  (isExporting
-                    ? "flex flex-row rounded-lg w-full px-4 py-1 items-center relative text-sm"
-                    : "flex flex-col sm:flex-row rounded-lg sm:visible w-full px-4 py-2 items-center relative") +
-                  (index % 2 !== 0 ? " bg-gray-50 " : "")
-                }
-              >
-                <div
-                  className={
-                    isExporting
-                      ? "font-title w-1/4 text-right pr-8 flex flex-row block"
-                      : "font-title w-full sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block"
-                  }
-                >
-                  {!isExporting && (
-                    <span className="sm:hidden w-1/2 flex flex-row items-center">
-                      Description
-                    </span>
-                  )}
-                  <span
-                    className={
-                      isExporting
-                        ? "inline-block w-full mb-0"
-                        : "inline-block w-1/2 sm:w-full mb-1 sm:mb-0"
-                    }
-                  >
-                    {!isViewMode ? (
-                      <input
-                        autoComplete="nope"
-                        // value={product.name}
-                        placeholder="Product Name"
-                        className={defaultInputSmStyle + " text-right"}
-                        onChange={(e) =>
-                          handlerProductValue(e, "name", product.id)
-                        }
-                      />
-                    ) : (
-                      <span className="pr-3">{product.name}</span>
-                    )}
-                  </span>
-                </div>
-                <div
-                  className={
-                    isExporting
-                      ? "font-title w-1/4 text-right pr-8 flex flex-row block"
-                      : "font-title w-full sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block"
-                  }
-                >
-                  {!isExporting && (
-                    <span className="sm:hidden w-1/2 flex flex-row items-center">
-                      Price
-                    </span>
-                  )}
-                  <span
-                    className={
-                      isExporting
-                        ? "inline-block w-full mb-0"
-                        : "inline-block w-1/2 sm:w-full mb-1 sm:mb-0"
-                    }
-                  >
-                    {!isViewMode ? (
-                      <input
-                        autoComplete="nope"
-                        // value={product.amount}
-                        placeholder="Price"
-                        type={"number"}
-                        className={defaultInputSmStyle + " text-right"}
-                        onChange={(e) =>
-                          handlerProductValue(e, "amount", product.id)
-                        }
-                      />
-                    ) : (
-                      <span className="pr-3">
-                        <NumberFormat
-                          // value={product.amount}
-                          className=""
-                          displayType={"text"}
-                          thousandSeparator={true}
-                          renderText={(value, props) => (
-                            <span {...props}>{value}</span>
-                          )}
-                        />
-                      </span>
-                    )}
-                  </span>
-                </div>
-                <div
-                  className={
-                    isExporting
-                      ? "font-title w-1/4 text-right pr-8 flex flex-row block"
-                      : "font-title w-full sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block"
-                  }
-                >
-                  {!isExporting && (
-                    <span className="sm:hidden w-1/2 flex flex-row items-center">
-                      Quantity
-                    </span>
-                  )}
-                  <span
-                    className={
-                      isExporting
-                        ? "inline-block w-full mb-0"
-                        : "inline-block w-1/2 sm:w-full mb-1 sm:mb-0"
-                    }
-                  >
-                    {!isViewMode ? (
-                      <input
-                        autoComplete="nope"
-                        // value={product.quantity}
-                        type={"number"}
-                        placeholder="Quantity"
-                        className={defaultInputSmStyle + " text-right"}
-                        onChange={(e) =>
-                          handlerProductValue(e, "quantity", product.id)
-                        }
-                      />
-                    ) : (
-                      <span className="pr-3">
-                        <NumberFormat
-                          // value={product.quantity}
-                          className=""
-                          displayType={"text"}
-                          thousandSeparator={true}
-                          renderText={(value, props) => (
-                            <span {...props}>{value}</span>
-                          )}
-                        />
-                      </span>
-                    )}
-                  </span>
-                </div>
-                <div
-                  className={
-                    isExporting
-                      ? "font-title w-1/4 text-right pr-9 flex flex-row `1block"
-                      : "font-title w-full sm:w-1/4 text-right sm:pr-9 flex flex-row sm:block"
-                  }
-                >
-                  {!isExporting && (
-                    <span className="sm:hidden w-1/2 flex flex-row items-center">
-                      Total
-                    </span>
-                  )}
-
-                  <span
-                    className={
-                      isExporting
-                        ? "inline-block w-full "
-                        : "inline-block w-1/2 sm:w-full"
-                    }
-                  >
-                    <NumberFormat
-                      value={
-                        Number.isInteger(product.quantity * product.amount)
-                          ? product.quantity * product.amount
-                          : (product.quantity * product.amount)
-                            .toFixed(4)
-                            .toString()
-                            .slice(0, -2)
-                      }
-                      className=""
-                      displayType={"text"}
-                      thousandSeparator={true}
-                      renderText={(value, props) => (
-                        <span {...props}>{value}</span>
-                      )}
-                    />{" "}
-                    {invoiceForm?.currencyUnit}
-                  </span>
-                </div>
-                {!isViewMode && (
+            {fields ? (<>
+              {fields.map(({ id }, index) => {
+                return (
                   <div
-                    className="w-full sm:w-10 sm:absolute sm:right-0"
-                    onClick={() => onDeleteProduct(product.id)}
+                    className={
+                      (isExporting
+                        ? "flex flex-row rounded-lg w-full px-4 py-1 items-center relative text-sm"
+                        : "flex flex-col sm:flex-row rounded-lg sm:visible w-full px-4 py-2 items-center relative") +
+                      (" bg-gray-50 ")
+                    }
                   >
-                    <div className="w-full text-red-500 font-title h-8 sm:h-8 sm:w-8 cursor-pointer rounded-2xl bg-red-200 mr-2 flex justify-center items-center">
-                      <DeleteIcon className="h-4 w-4" style={IconStyle} />
-                      <span className="block sm:hidden">Delete Product</span>
+                    <div
+                      className={
+                        isExporting
+                          ? "font-title w-1/4 text-right pr-8 flex flex-row block"
+                          : "font-title w-full sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block"
+                      }
+                    >
+                      {!isExporting && (
+                        <span className="sm:hidden w-1/2 flex flex-row items-center">
+                          Description
+                        </span>
+                      )}
+                      <span
+                        className={
+                          isExporting
+                            ? "inline-block w-full mb-0"
+                            : "inline-block w-1/2 sm:w-full mb-1 sm:mb-0"
+                        }
+                      >
+                        {!isViewMode ? (
+                          <input
+                            autoComplete="nope"
+                            // value={product.name}
+                            name={`test.${index}.Desc`}
+                            {...register(`test.${index}.Desc`, {
+                              required: false,
+                            })}
+                            placeholder="Product Name"
+                            className={defaultInputSmStyle + " text-right"}
+
+                          />
+                        ) : (
+                          <span className="pr-3"></span>
+                        )}
+                      </span>
                     </div>
+                    <div
+                      className={
+                        isExporting
+                          ? "font-title w-1/4 text-right pr-8 flex flex-row block"
+                          : "font-title w-full sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block"
+                      }
+                    >
+                      {!isExporting && (
+                        <span className="sm:hidden w-1/2 flex flex-row items-center">
+                          Price
+                        </span>
+                      )}
+                      <span
+                        className={
+                          isExporting
+                            ? "inline-block w-full mb-0"
+                            : "inline-block w-1/2 sm:w-full mb-1 sm:mb-0"
+                        }
+                      >
+                        {!isViewMode ? (
+                          <input
+                            autoComplete="nope"
+                            // value={product.amount}
+                            {...register(`test.${index}.Rating`, {
+                              required: false,
+                            })}
+                            name={`test.${index}.Rating`}
+                            placeholder="Price"
+                            type={"number"}
+                            className={defaultInputSmStyle + " text-right"}
+
+                          />
+                        ) : (
+                          <span className="pr-3">
+                            <NumberFormat
+                              // value={product.amount}
+                              className=""
+                              displayType={"text"}
+                              thousandSeparator={true}
+                              renderText={(value, props) => (
+                                <span {...props}>{value}</span>
+                              )}
+                            />
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                    <div
+                      className={
+                        isExporting
+                          ? "font-title w-1/4 text-right pr-8 flex flex-row block"
+                          : "font-title w-full sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block"
+                      }
+                    >
+                      {!isExporting && (
+                        <span className="sm:hidden w-1/2 flex flex-row items-center">
+                          Quantity
+                        </span>
+                      )}
+                      <span
+                        className={
+                          isExporting
+                            ? "inline-block w-full mb-0"
+                            : "inline-block w-1/2 sm:w-full mb-1 sm:mb-0"
+                        }
+                      >
+                        {!isViewMode ? (
+                          <input
+                            autoComplete="nope"
+                            // value={product.quantity}
+                            type={"number"}
+                            placeholder="Quantity"
+                            className={defaultInputSmStyle + " text-right"}
+                            {...register(`test.${index}.qty`, {
+                              required: false,
+                              pattern: {
+                                value: /^[1-9]\d*(\d+)?$/i,
+                                message: "Please enter an integer",
+                              },
+                            })}
+                            name={`test.${index}.qty`}
+                          />
+                        ) : (
+                          <span className="pr-3">
+                            <NumberFormat
+                              // value={product.quantity}
+                              className=""
+                              displayType={"text"}
+                              thousandSeparator={true}
+                              renderText={(value, props) => (
+                                <span {...props}>{value}</span>
+                              )}
+                            />
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                    <div
+                      className={
+                        isExporting
+                          ? "font-title w-1/4 text-right pr-9 flex flex-row `1block"
+                          : "font-title w-full sm:w-1/4 text-right sm:pr-9 flex flex-row sm:block"
+                      }
+                    >
+                      {/* {!isExporting && (
+                        <span className="sm:hidden w-1/2 flex flex-row items-center"
+                        >
+                          Total
+                        </span>
+                      )}
+
+                      <span
+                        className={
+                          isExporting
+                            ? "inline-block w-full "
+                            : "inline-block w-1/2 sm:w-full"
+                        }
+                      >
+                        <NumberFormat
+                          name={`test.${index}.Amount`}
+                          value={getValues().test[index].Amount}
+                          className=""
+                          displayType={"text"}
+
+                        // thousandSeparator={true}
+                        // renderText={(value, props) => (
+                        //   <span {...props}>{value}</span>
+                        // )}
+                        /> */}
+                      {/* {invoiceForm?.currencyUnit} */}
+                      {/* </span> */}
+                      <span
+                        className={
+                          isExporting
+                            ? "inline-block w-full mb-0"
+                            : "inline-block w-1/2 sm:w-full mb-1 sm:mb-0"
+                        }
+                      >
+                        {!isViewMode ? (
+                          <input
+                            autoComplete="nope"
+                            // value={product.quantity}
+                            placeholder="Total"
+                            className={defaultInputSmStyle + " text-right"}
+                            name={`test.${index}.Amount`}
+                            {...register(`test.${index}.Amount`)}
+                            value={getValues().test[index].Amount}
+                          />
+                        ) : (
+                          <span className="pr-3">
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                    {!isViewMode && (
+                      <div
+                        className="w-full sm:w-10 sm:absolute sm:right-0"
+
+                      >
+                        <div className="w-full text-red-500 font-title h-8 sm:h-8 sm:w-8 cursor-pointer rounded-2xl bg-red-200 mr-2 flex justify-center items-center">
+                          <DeleteIcon className="h-4 w-4" style={IconStyle} onClick={() => remove(index)} />
+                          <span className="block sm:hidden">Delete Product</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            ))}
+                );
+              }
+              )}
+            </>) : (<>
+            </>)}
+
+
 
             {/* Add Product Actions */}
-            {!isViewMode && (
-              <div className="flex flex-col sm:flex-row rounded-lg sm:visible w-full px-4 py-2 items-center sm:justify-end">
-                <div className="font-title w-full sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block mb-1">
-                  <Button size="sm" block={1} onClick={addEmptyProduct}>
-                    <PlusCircleIcon style={IconStyle} className="h-5 w-5" />
-                    Add Empty Product
-                  </Button>
+            {
+              !isViewMode && (
+                <div className="flex flex-col sm:flex-row rounded-lg sm:visible w-full px-4 py-2 items-center sm:justify-end">
+                  <div className="font-title w-full sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block mb-1">
+                    <Button size="sm" block={1} onClick={handleappendupdate}  >
+                      <PlusCircleIcon style={IconStyle} className="h-5 w-5" />
+                      Add Empty Product
+                    </Button>
+                  </div>
+                  <div className="font-title w-full sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block mb-1">
+                    <Button size="sm" block={1} onClick={openChooseProduct}>
+                      <InvoiceIcon style={IconStyle} className="w-5 h-5" />
+                      Add Exisiting Product
+                    </Button>
+                  </div>
                 </div>
-                <div className="font-title w-full sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block mb-1">
-                  <Button size="sm" block={1} onClick={openChooseProduct}>
-                    <InvoiceIcon style={IconStyle} className="w-5 h-5" />
-                    Add Exisiting Product
-                  </Button>
-                </div>
-              </div>
-            )}
+              )
+            }
             {/* Add Product Actions Finished*/}
 
             {/* Subtotal Start */}
@@ -1268,6 +1201,7 @@ function InvoiceDetailScreen(props) {
                     ? "font-title w-1/4 text-right pr-9 flex flex-row block justify-end text-sm "
                     : "font-title w-1/2 sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block mb-1 sm:mb-0"
                 }
+
               >
                 Subtotal
               </div>
@@ -1279,172 +1213,220 @@ function InvoiceDetailScreen(props) {
                 }
               >
                 <NumberFormat
-                  value={subTotal}
+                  value={subTotals ? subTotals : ""}
                   className="inline-block"
                   displayType={"text"}
-                  thousandSeparator={true}
-                  renderText={(value, props) => (
-                    <span {...props}>
-                      {value} {invoiceForm?.currencyUnit}
-                    </span>
-                  )}
                 />
               </div>
             </div>
             {/* Subtotal Finished */}
 
-            {/* Taxes */}
-            {invoiceForm?.taxes?.map((tax, index) => (
+            {/* discount */}
+            <div
+              className={
+                isExporting
+                  ? "flex flex-row rounded-lg w-full px-4 py-1 justify-end items-end relative text-sm"
+                  : "flex flex-row sm:flex-row sm:justify-end rounded-lg sm:visible w-full px-4 py-1 items-center "
+              }
+            >
+
               <div
-                key={`${index}_${tax.id}`}
                 className={
                   isExporting
-                    ? "flex flex-row justify-end rounded-lg w-full px-4 py-1 items-center relative"
-                    : "flex flex-col sm:flex-row sm:justify-end rounded-lg sm:visible w-full px-4 py-1 items-center relative"
+                    ? "font-title w-1/4 text-right pr-9 flex flex-row block justify-end text-sm "
+                    : "font-title w-1/2 sm:w-1/4 text-right sm:pr-9 flex flex-row justify-end sm:block mb-1"
                 }
               >
-                <div
-                  className={
-                    isExporting
-                      ? "font-title w-3/5 text-right pr-8 flex flex-row block"
-                      : "font-title w-full sm:w-3/5 text-right sm:pr-8 flex flex-row sm:block"
-                  }
-                >
-                  {!isExporting && (
-                    <div className="sm:hidden w-1/3 flex flex-row items-center">
-                      Tax Type
-                    </div>
-                  )}
-                  <div
-                    className={
-                      isExporting
-                        ? "w-full mb-0 flex flex-row items-center justify-end"
-                        : "w-2/3 sm:w-full mb-1 sm:mb-0 flex flex-row items-center sm:justify-end"
-                    }
-                  >
-                    <div
-                      className={
-                        isExporting ? "w-1/3 pr-1" : "w-1/2 sm:w-1/3 pr-1"
-                      }
-                    >
-                      {!isViewMode && (
-                        <input
-                          autoComplete="nope"
-                          value={tax.title}
-                          type={"text"}
-                          placeholder="Tax Title"
-                          className={defaultInputSmStyle + " text-right"}
-                          onChange={(e) =>
-                            handlerTaxesValue(e, "title", tax.id)
-                          }
-                        />
-                      )}
-                    </div>
-                    <div
-                      className={
-                        (isExporting
-                          ? "w-1/3 relative flex flex-row items-center text-sm"
-                          : "w-1/2 sm:w-1/3 relative flex flex-row items-center") +
-                        (isViewMode ? " justify-end" : " pr-4")
-                      }
-                    >
-                      {!isViewMode ? (
-                        <>
-                          <input
-                            autoComplete="nope"
-                            value={tax.value}
-                            type={"number"}
-                            placeholder="Percentage"
-                            className={defaultInputSmStyle + " text-right"}
-                            onChange={(e) =>
-                              handlerTaxesValue(e, "value", tax.id)
-                            }
-                          />
-                          <span className="ml-1">
-                            {tax.type === "percentage"
-                              ? "%"
-                              : invoiceForm.currencyUnit}
-                          </span>
-                        </>
-                      ) : (
-                        <div className="text-right">{tax.title}</div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div
-                  className={
-                    isExporting
-                      ? "font-title w-1/4 text-right pr-9 flex flex-row text-sm"
-                      : "font-title w-full sm:w-1/4 text-right sm:pr-9 flex flex-row sm:block"
-                  }
-                >
-                  {!isExporting && (
-                    <span className="sm:hidden w-1/2 flex flex-row items-center">
-                      Amount
-                    </span>
-                  )}
-                  <span
-                    className={
-                      isExporting
-                        ? "inline-block w-full"
-                        : "inline-block w-1/2 sm:w-full"
-                    }
-                  >
-                    <>
-                      <div className="w-full">
-                        <NumberFormat
-                          value={
-                            tax.type === "percentage"
-                              ? totalPercentTax
-                              : tax.amount
-                          }
-                          className=""
-                          displayType={"text"}
-                          thousandSeparator={true}
-                          renderText={(value, props) => (
-                            <span {...props}>
-                              {value} {invoiceForm?.currencyUnit}
-                            </span>
-                          )}
-                        />
-                      </div>
-                    </>
-                  </span>
-                </div>
-                {!isViewMode && (
-                  <div
-                    className="w-full sm:w-10 sm:absolute sm:right-0"
-                    onClick={() => onDeleteTax(tax.id)}
-                  >
-                    <div className="w-full text-red-500 font-title h-8 sm:h-8 sm:w-8 cursor-pointer rounded-2xl bg-red-200 mr-2 flex justify-center items-center">
-                      <DeleteIcon className="h-4 w-4" style={IconStyle} />
-                      <span className="block sm:hidden">Delete Tax</span>
-                    </div>
-                  </div>
-                )}
+                <input
+                  className={defaultInputSmStyle + " text-right"}
+                  value={"Discount"}
+                />
               </div>
-            ))}
-            {/* Taxes Finished*/}
+              <div
+                className={
+                  isExporting
+                    ? "font-title w-1/4 text-right pr-9 flex flex-row block justify-end text-sm "
+                    : "font-title w-1/2 sm:w-1/4 text-right sm:pr-9 flex flex-row justify-end sm:block mb-1"
+                }
+              >
+                <input
+                  autoComplete="nope"
+                  type={"number"}
+                  placeholder="discount"
+                  className={defaultInputSmStyle + " text-right"}
+                  onChange={(e) => handleDiscountValue(e)}
+                  value={discount ? discount : ""}
+                />
+              </div>
+            </div>
+            {/* discount finished*/}
 
-            {/* Add Tax Action */}
-            {!isViewMode && (
-              <div className="flex flex-col sm:flex-row rounded-lg sm:visible w-full px-4 py-2 items-center sm:justify-end">
-                <div className="font-title w-full sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block mb-1">
-                  <Button size="sm" block={1} onClick={addPercentageTax}>
-                    <TaxesIcon style={IconStyle} className="h-5 w-5" />
-                    Add Taxes (%)
-                  </Button>
-                </div>
-                <div className="font-title w-full sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block mb-1">
-                  <Button size="sm" block={1} onClick={addEmptyTax}>
-                    <DollarIcon style={IconStyle} className="w-5 h-5" />
-                    Add Extra Fee
-                  </Button>
-                </div>
+            {/* Taxes */}
+            <div
+              className={
+                isExporting
+                  ? "flex flex-row rounded-lg w-full px-4 py-1 justify-end items-end relative text-sm"
+                  : "flex flex-row sm:flex-row sm:justify-end rounded-lg sm:visible w-full px-4 py-1 items-center "
+              }
+            >
+              <div
+                className={
+                  isExporting
+                    ? "font-title w-1/4 text-right pr-9 flex flex-row block justify-end text-sm "
+                    : "font-title w-1/2 sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block mb-1 sm:mb-0"
+                }
+
+              >
+                <input
+                  className={defaultInputSmStyle + " text-right"}
+                  value={"Tax %"}
+                />
               </div>
-            )}
-            {/* Add Tax Action Finished*/}
+              <div
+                className={
+                  isExporting
+                    ? "font-title w-1/4 text-right pr-9 flex flex-row block justify-end text-sm "
+                    : "font-title w-1/2 sm:w-1/4 text-right sm:pr-9 flex flex-row justify-end sm:block mb-1"
+                }
+              >
+                <input
+                  autoComplete="nope"
+                  type={"number"}
+                  placeholder="Percentage"
+                  className={defaultInputSmStyle + " text-right"}
+                  onChange={(e) => handleTaxValue(e)}
+                  value={tax ? tax : ""}
+                />
+              </div>
+            </div>
+            {/* Taxes finished*/}
+
+            {/* shipping */}
+            <div
+              className={
+                isExporting
+                  ? "flex flex-row rounded-lg w-full px-4 py-1 justify-end items-end relative text-sm"
+                  : "flex flex-row sm:flex-row sm:justify-end rounded-lg sm:visible w-full px-4 py-1 items-center "
+              }
+            >
+              <div
+                className={
+                  isExporting
+                    ? "font-title w-1/4 text-right pr-9 flex flex-row block justify-end text-sm "
+                    : "font-title w-1/2 sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block mb-1 sm:mb-0"
+                }
+
+              >
+                <input
+                  className={defaultInputSmStyle + " text-right"}
+                  value={"Shipping"}
+                />
+              </div>
+              <div
+                className={
+                  isExporting
+                    ? "font-title w-1/4 text-right pr-9 flex flex-row block justify-end text-sm "
+                    : "font-title w-1/2 sm:w-1/4 text-right sm:pr-9 flex flex-row justify-end sm:block mb-1"
+                }
+              >
+                <input
+                  autoComplete="nope"
+                  type={"number"}
+                  placeholder="Percentage"
+                  className={defaultInputSmStyle + " text-right"}
+                  onChange={(e) => handleShipping(e)}
+                  value={shipping ? shipping : ""}
+                />
+              </div>
+            </div>
+            {/* shipping finished*/}
+
+
+            {/*  Amount Paid */}
+            <div
+              className={
+                isExporting
+                  ? "flex flex-row rounded-lg w-full px-4 py-1 justify-end items-end relative text-sm"
+                  : "flex flex-row sm:flex-row sm:justify-end rounded-lg sm:visible w-full px-4 py-1 items-center "
+              }
+            >
+              <div
+                className={
+                  isExporting
+                    ? "font-title w-1/4 text-right pr-9 flex flex-row block justify-end text-sm "
+                    : "font-title w-1/2 sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block mb-1 sm:mb-0"
+                }
+
+              >
+                <input
+                  className={defaultInputSmStyle + " text-right"}
+                  value={"Amount Paid"}
+                />
+              </div>
+              <div
+                className={
+                  isExporting
+                    ? "font-title w-1/4 text-right pr-9 flex flex-row block justify-end text-sm "
+                    : "font-title w-1/2 sm:w-1/4 text-right sm:pr-9 flex flex-row justify-end sm:block mb-1"
+                }
+              >
+                <input
+                  autoComplete="nope"
+                  type={"number"}
+                  placeholder="Percentage"
+                  className={defaultInputSmStyle + " text-right"}
+                  onChange={(e) => handlePaidAmount(e)}
+                  value={amount ? amount : ""}
+                />
+              </div>
+            </div>
+            {/*  Amount Paid finished*/}
+
+            {/*  Balance Due Paid */}
+            <div
+              className={
+                isExporting
+                  ? "flex flex-row rounded-lg w-full px-4 py-1 justify-end items-end relative text-sm"
+                  : "flex flex-row sm:flex-row sm:justify-end rounded-lg sm:visible w-full px-4 py-1 items-center "
+              }
+            >
+              <div
+                className={
+                  isExporting
+                    ? "font-title w-1/4 text-right pr-9 flex flex-row block justify-end text-sm "
+                    : "font-title w-1/2 sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block mb-1 sm:mb-0"
+                }
+              >
+
+                <input
+                  className={defaultInputSmStyle + " text-right"}
+                  // value={" Balance Due"}
+                  {...register("balance")}
+                  onChange={(e) => setBalance(e.target.value)}
+                />
+
+              </div>
+              <div
+                className={
+                  isExporting
+                    ? "font-title w-1/4 text-right pr-9 flex flex-row block justify-end text-sm "
+                    : "font-title w-1/2 sm:w-1/4 text-right sm:pr-9 flex flex-row justify-end sm:block mb-1"
+                }
+              >
+                <input
+                  autoComplete="nope"
+                  type={"number"}
+                  placeholder="Percentage"
+                  className={defaultInputSmStyle + " text-right"}
+                  onChange={(e) => setBalanceDue(e.target.value)}
+                  value={balanceDue ? balanceDue : ""}
+                />
+              </div>
+            </div>
+            {/*  Balance Due finished*/}
+
+
+
 
             {/* Subtotal Start */}
             <div
@@ -1477,20 +1459,15 @@ function InvoiceDetailScreen(props) {
                       ? "font-title text-lg w-1/2 text-right pr-9 flex flex-row block  justify-end items-center"
                       : "font-title text-lg w-1/2 text-right sm:pr-9 flex flex-row justify-end sm:block items-center"
                   }
+
                 >
                   <NumberFormat
-                    value={invoiceForm?.totalAmount}
+
                     className=""
                     displayType={"text"}
                     thousandSeparator={true}
-                    renderText={(value, props) => (
-                      <span {...props}>
-                        {value}{" "}
-                        <span className={isExporting ? "text-sm" : "text-base"}>
-                          {invoiceForm?.currencyUnit}
-                        </span>
-                      </span>
-                    )}
+                    onChange={(e) => setTotal(e.target.value)}
+                    value={total ? total : ""}
                   />
                 </div>
               </div>
@@ -1499,13 +1476,15 @@ function InvoiceDetailScreen(props) {
           </div>
           {/* Products Finished */}
         </div>
-      )}
+      )
+      }
 
-      {invoiceForm && invoiceForm?.statusIndex !== "3" && (
-        <div className="px-4 pt-3">
-          <div className="bg-white rounded-xl px-3 py-3">
-            <div className="flex flex-col flex-wrap sm:flex-row justify-end">
-              {/* {params.id === "new" && (
+      {
+        invoiceForm && invoiceForm?.statusIndex !== "3" && (
+          <div className="px-4 pt-3">
+            <div className="bg-white rounded-xl px-3 py-3">
+              <div className="flex flex-col flex-wrap sm:flex-row justify-end">
+                {/* {params.id === "new" && (
                 <div className="w-full flex-1 my-1 sm:my-1 md:my-0 px-1">
                   <Button
                     outlined={1}
@@ -1532,23 +1511,24 @@ function InvoiceDetailScreen(props) {
                   </Button>
                 </div>
               )} */}
-              <div className="w-1/2   my-1 sm:my-1 md:my-0 px-1  " >
-                <Button
-                  size="sm"
-                  block={1}
-                  success={1}
-                  type="submit"
-                  onClick={(e) => { saveInvoiceDetail(e) }}
-                >
-                  <SecurityIcon className="h-5 w-5 mr-1" />{" "}
-                  {params.id === "new" ? "Save" : "Update"} As Paid
-                </Button>
+                <div className="w-1/2   my-1 sm:my-1 md:my-0 px-1  " >
+                  <Button
+                    size="sm"
+                    block={1}
+                    success={1}
+                    type="submit"
+                  // onClick={(e) => { saveInvoiceDetail(e) }}
+                  >
+                    <SecurityIcon className="h-5 w-5 mr-1" />{" "}
+                    {params.id === "new" ? "Save" : "Update"} As Paid
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
-
+        )
+      }
+      {/* 
       {invoiceForm && (
         <div className="p-4">
           <InvoiceTopBar
@@ -1560,9 +1540,8 @@ function InvoiceDetailScreen(props) {
             onClickDownloadImg={handleDownloadImg}
           />
         </div>
-      )}
-    </div>
-
+      )} */}
+    </form >
   );
 }
 
