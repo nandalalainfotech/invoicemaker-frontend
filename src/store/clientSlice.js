@@ -1,7 +1,6 @@
-import { createSlice } from "@reduxjs/toolkit";
-import localforage from "localforage";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import Axios from "axios";
 import { nanoid } from "nanoid";
-import { CLIENTS_KEY, CLIENT_FORM_KEY } from "../constants/localKeys";
 
 const initialState = {
   openClientSelector: false,
@@ -19,6 +18,15 @@ const initialState = {
   deletedID: null,
 };
 
+export const ClientUser = createAsyncThunk(
+  'client/ClientUser',
+  async (clientregister) => {
+    const request = await Axios.post('/api/clients/ClientUser', clientregister);
+    const response = await request.data;
+    return response
+  }
+);
+
 export const clientsSlice = createSlice({
   name: "clients",
   initialState,
@@ -26,7 +34,7 @@ export const clientsSlice = createSlice({
     addNewClient: (state, action) => {
       const newDatas = [...state.data, action.payload];
       state.data = newDatas;
-      localforage.setItem(CLIENTS_KEY, newDatas);
+      // localforage.setItem(CLIENTS_KEY, newDatas);
 
       const reNewForm = {
         id: nanoid(),
@@ -38,17 +46,17 @@ export const clientsSlice = createSlice({
       };
 
       state.newForm = { ...reNewForm };
-      localforage.setItem(CLIENT_FORM_KEY, reNewForm);
+      // localforage.setItem(CLIENT_FORM_KEY, reNewForm);
     },
 
     updateNewClientForm: (state, action) => {
       state.newForm = { ...action.payload };
-      localforage.setItem(CLIENT_FORM_KEY, { ...state.newForm });
+      // localforage.setItem(CLIENT_FORM_KEY, { ...state.newForm });
     },
 
     updateNewClientFormField: (state, action) => {
       state.newForm[action.payload.key] = action.payload.value;
-      localforage.setItem(CLIENT_FORM_KEY, { ...state.newForm });
+      // localforage.setItem(CLIENT_FORM_KEY, { ...state.newForm });
     },
 
     setAllClients: (state, action) => {
@@ -69,7 +77,7 @@ export const clientsSlice = createSlice({
       );
       state.data = newDatas;
       state.deletedID = null;
-      localforage.setItem(CLIENTS_KEY, newDatas);
+      // localforage.setItem(CLIENTS_KEY, newDatas);
     },
 
     onConfirmEditClient: (state, action) => {
@@ -80,7 +88,7 @@ export const clientsSlice = createSlice({
         state.data[isFindIndex] = { ...action.payload };
       }
       state.editedID = null;
-      localforage.setItem(CLIENTS_KEY, [...state.data]);
+      // localforage.setItem(CLIENTS_KEY, [...state.data]);
     },
 
     setOpenClientSelector: (state, action) => {

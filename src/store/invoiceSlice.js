@@ -1,4 +1,4 @@
-import { createSlice, nanoid } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice, nanoid } from "@reduxjs/toolkit";
 import localforage from "localforage";
 import imageData from "../shared/imageData.json";
 import colorData from "../shared/colorData.json";
@@ -9,6 +9,7 @@ import {
   INVOICE_DETAILS,
   INVOICE_FORM_KEY,
 } from "../constants/localKeys";
+import Axios from "axios";
 
 const initialState = {
   isConfirmModal: false,
@@ -52,6 +53,22 @@ const initialState = {
     ],
     taxes: [],
   },
+};
+
+export const InvoiceUserdetails = createAsyncThunk(
+  'invoice/UserInvoicedetails',
+  async (invoices) => {
+    const request = await Axios.post('/api/invoices/invoicedetail', invoices);
+    const response = await request.data;
+    return response
+  }
+);
+
+
+
+
+export const InvoiceListPDF = () => async (dispatch) => {
+  const data = await Axios.get(`/api/invoices/downloadALLPDF/`);
 };
 
 // export const signIn = signIn({
@@ -165,6 +182,7 @@ export const invoiceSlice = createSlice({
       state.newForm = { ...action.payload };
       localforage.setItem(INVOICE_FORM_KEY, { ...state.newForm });
     },
+
 
     updateExisitingInvoiceForm: (state, action) => {
       const {

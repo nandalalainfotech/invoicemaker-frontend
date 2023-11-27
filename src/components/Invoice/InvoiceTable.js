@@ -10,12 +10,17 @@ import {
   defaultSearchStyle,
 } from "../../constants/defaultStyles";
 import ReactPaginate from "react-paginate";
-import { getAllInvoiceSelector, setDeleteId } from "../../store/invoiceSlice";
+import { getAllInvoiceSelector, } from "../../store/invoiceSlice";
 import { useNavigate } from "react-router-dom";
 import NumberFormat from "react-number-format";
 import InvoiceIcon from "../Icons/InvoiceIcon";
 import { useAppContext } from "../../context/AppContext";
 import EmptyBar from "../Common/EmptyBar";
+import Axios from "axios";
+import invoiceListSlice, { userList } from "../../store/invoiceListSlice";
+import { deleteInvoice } from "../../store/deleteSlice";
+import { editInvoice } from "../../store/invoiceEditSlice";
+import { updateInvoice } from "../../store/invoiceUpdateSlice";
 
 // Example items, to simulate fetching from another resources.
 const itemsPerPage = 10;
@@ -29,12 +34,17 @@ function InvoiceTable({ showAdvanceSearch = false }) {
   const dispatch = useDispatch();
   const allInvoices = useSelector(getAllInvoiceSelector);
   const navigate = useNavigate();
-
   const [searchForm, setSearchForm] = useState(emptySearchForm);
-  const [currentItems, setCurrentItems] = useState(null);
+  const [currentItems, setCurrentItems] = useState([]);
   const [pageCount, setPageCount] = useState(0);
   const [itemOffset, setItemOffset] = useState(0);
 
+
+  const { user } = useSelector(state => state.user)
+  let userDetail = sessionStorage.getItem('user', JSON.stringify("user"));
+
+
+  const invoDetail = JSON.parse(userDetail)
   const invoices = useMemo(() => {
     let filterData = allInvoices.length > 0 ? [...allInvoices].reverse() : [];
     if (searchForm.invoiceNo?.trim()) {
@@ -58,18 +68,20 @@ function InvoiceTable({ showAdvanceSearch = false }) {
     setItemOffset(newOffset);
   };
 
-  const handleDelete = useCallback(
-    (item) => {
-      dispatch(setDeleteId(item.id));
-    },
-    [dispatch]
-  );
+  // const handleDelete = useCallback(
+  //   (item) => {
+  //     dispatch(setDeleteId(item.id));
+  //   },
+  //   [dispatch]
+  // );
 
   const handleEdit = useCallback(
-    (item) => {
-      navigate("/invoices/" + item.id);
+    (item1) => {
+      dispatch(editInvoice(item1._id))
+      dispatch(updateInvoice(item1))
+      navigate("/invoices/" + item1._id);
     },
-    [navigate]
+    [navigate, dispatch]
   );
 
   const handlerSearchValue = useCallback((event, keyName) => {
@@ -82,12 +94,44 @@ function InvoiceTable({ showAdvanceSearch = false }) {
     setItemOffset(0);
   }, []);
 
+  currentItems.push("getInvoicedetail")
   useEffect(() => {
     // Fetch items from another resources.
     const endOffset = itemOffset + itemsPerPage;
     setCurrentItems(invoices.slice(itemOffset, endOffset));
     setPageCount(Math.ceil(invoices.length / itemsPerPage));
+
   }, [invoices, itemOffset]);
+
+  // const getData = async () => {
+  //   const response = await Axios.get('/api/invoices/getInvoicedetail');
+  //   setDetailInvoice(response.data)
+  // }
+
+
+  const handleDelete = useCallback(
+    (id) => {
+      dispatch(deleteInvoice(id._id))
+      window.location.reload(true);
+    },
+    [dispatch]
+  )
+  // setItems((prevItem) => prevItem.filter((item) => item.id !== id));
+
+  const invoicelist = useSelector((state) => state.userList)
+  const invoiceDetailList = invoicelist.userdetailList
+
+
+
+  // const deletedID = useSelector((state) => state?.deleteSlice)
+  // const { error, id, loading, success } = deletedID;
+
+
+  useEffect(() => {
+    dispatch(userList())
+  }, [dispatch]);
+
+
 
   return (
     <>
@@ -143,7 +187,7 @@ function InvoiceTable({ showAdvanceSearch = false }) {
             Client Name
           </div>
           <div className="sm:text-left text-default-color font-title flex-1">
-            Status
+            Mobile No
           </div>
           <div className="sm:text-left text-default-color font-title flex-1">
             Amount
@@ -154,17 +198,19 @@ function InvoiceTable({ showAdvanceSearch = false }) {
         </div>
 
         <div>
-          {currentItems &&
-            currentItems.map((invoice) => (
-              <div className={defaultTdWrapperStyle} key={invoice.id}>
+          {invoiceDetailList
+            ?.filter((item) => {
+              return item?.userid === invoDetail.id
+            })?.map((item1) => (
+              < div className={defaultTdWrapperStyle} key={item1?.id}>
                 <div className={defaultTdStyle}>
                   <div className={defaultTdContentTitleStyle}>Invoice Name</div>
                   <div className={defaultTdContent}>
                     <span
                       className="whitespace-nowrap text-ellipsis overflow-hidden text-blue-500 cursor-pointer"
-                      onClick={() => handleEdit(invoice)}
+                      onClick={() => handleEdit(item1)}
                     >
-                      {invoice.invoiceNo}
+                      {item1?.invoiceNo}
                     </span>
                   </div>
                 </div>
@@ -173,7 +219,7 @@ function InvoiceTable({ showAdvanceSearch = false }) {
                   <div className={defaultTdContentTitleStyle}>Client Name</div>
                   <div className={defaultTdContent}>
                     <span className="whitespace-nowrap text-ellipsis overflow-hidden">
-                      {invoice.clientName}
+                      {item1?.clientName}
                     </span>
                   </div>
                 </div>
@@ -184,14 +230,14 @@ function InvoiceTable({ showAdvanceSearch = false }) {
                     <span
                       className={
                         "whitespace-nowrap text-ellipsis overflow-hidden px-3 rounded-xl  py-1 " +
-                        (invoice.statusIndex === "2"
+                        (item1?.statusIndex === "2"
                           ? "bg-red-100 text-red-400"
-                          : invoice.statusIndex === "3"
-                          ? "bg-green-200 text-green-600"
-                          : "bg-gray-100 text-gray-600 ")
+                          : item1.statusIndex === "3"
+                            ? "bg-green-200 text-green-600"
+                            : "bg-gray-100 text-gray-600 ")
                       }
                     >
-                      {invoice.statusName}
+                      {item1?.clientMobileNo}
                     </span>
                   </div>
                 </div>
@@ -201,7 +247,7 @@ function InvoiceTable({ showAdvanceSearch = false }) {
                   <div className={defaultTdContent + " "}>
                     <span className="whitespace-nowrap text-ellipsis overflow-hidden ">
                       <NumberFormat
-                        value={invoice.totalAmount}
+                        value={item1?.totalAmount}
                         className=""
                         displayType={"text"}
                         thousandSeparator={true}
@@ -209,6 +255,7 @@ function InvoiceTable({ showAdvanceSearch = false }) {
                           <span {...props}>{value}</span>
                         )}
                       />
+                      {item1?.subTotal}
                     </span>
                   </div>
                 </div>
@@ -239,10 +286,10 @@ function InvoiceTable({ showAdvanceSearch = false }) {
                       }
                       transition
                     >
-                      <MenuItem onClick={() => handleEdit(invoice)}>
+                      <MenuItem onClick={() => handleEdit(item1)}>
                         Detail
                       </MenuItem>
-                      <MenuItem onClick={() => handleDelete(invoice)}>
+                      <MenuItem onClick={() => handleDelete(item1)}>
                         Delete
                       </MenuItem>
                     </Menu>
@@ -273,7 +320,7 @@ function InvoiceTable({ showAdvanceSearch = false }) {
             />
           )}
         </div>
-      </div>
+      </div >
     </>
   );
 }

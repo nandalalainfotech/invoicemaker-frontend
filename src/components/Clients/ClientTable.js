@@ -17,6 +17,8 @@ import {
 import ReactPaginate from "react-paginate";
 import { useAppContext } from "../../context/AppContext";
 import EmptyBar from "../Common/EmptyBar";
+import Axios from "axios";
+import { getClientDetails } from "../../store/clientDetailsSlice";
 
 // Example items, to simulate fetching from another resources.
 const itemsPerPage = 10;
@@ -35,6 +37,8 @@ function ClientTable({ showAdvanceSearch = false }) {
   const [currentItems, setCurrentItems] = useState(null);
   const [pageCount, setPageCount] = useState(0);
   const [itemOffset, setItemOffset] = useState(0);
+  const [users, setUser] = useState([]);
+  const [editID, setEditID] = useState([])
 
   const clients = useMemo(() => {
     let filterData = allClients.length > 0 ? [...allClients].reverse() : [];
@@ -72,9 +76,14 @@ function ClientTable({ showAdvanceSearch = false }) {
     [dispatch]
   );
 
+  const clientDetail = useSelector((state) => state.clientDetails)
+  const detailsClient = clientDetail.clientdetail;
+  // setUser(detailsClient)
+
   const handleEdit = useCallback(
     (item) => {
       dispatch(setEditedId(item.id));
+      setEditID(item.id)
     },
     [dispatch]
   );
@@ -90,11 +99,14 @@ function ClientTable({ showAdvanceSearch = false }) {
   }, []);
 
   useEffect(() => {
-    // Fetch items from another resources.
-    const endOffset = itemOffset + itemsPerPage;
-    setCurrentItems(clients.slice(itemOffset, endOffset));
-    setPageCount(Math.ceil(clients.length / itemsPerPage));
-  }, [clients, itemOffset]);
+    setUser(detailsClient)
+  }, [detailsClient])
+  
+  useEffect(() => {
+    dispatch(getClientDetails());
+  
+
+  }, []);
 
   return (
     <>
@@ -196,13 +208,14 @@ function ClientTable({ showAdvanceSearch = false }) {
         </div>
 
         <div>
-          {currentItems &&
-            currentItems.map((client) => (
-              <div className={defaultTdWrapperStyle} key={client.id}>
+          {users &&
+          
+            users.map((client) => (
+              <div className={defaultTdWrapperStyle} key={client._id}>
                 <div className={defaultTdStyle}>
                   <div className={defaultTdContentTitleStyle}>Name</div>
                   <div className={defaultTdContent}>
-                    {client.image ? (
+                    {/* {client.image ? (
                       <img
                         className="object-cover h-10 w-10 rounded-2xl"
                         src={client.image}
@@ -223,10 +236,10 @@ function ClientTable({ showAdvanceSearch = false }) {
                           />
                         </svg>
                       </span>
-                    )}
+                    )} */}
 
                     <span className="whitespace-nowrap text-ellipsis overflow-hidden pl-1">
-                      {client.name}
+                      {client.clientName}
                     </span>
                   </div>
                 </div>
@@ -234,7 +247,7 @@ function ClientTable({ showAdvanceSearch = false }) {
                   <div className={defaultTdContentTitleStyle}>Mobile</div>
                   <div className={defaultTdContent}>
                     <span className="whitespace-nowrap text-ellipsis overflow-hidden">
-                      {client.mobileNo}
+                      {client.clientMobileNo}
                     </span>
                   </div>
                 </div>
@@ -242,7 +255,7 @@ function ClientTable({ showAdvanceSearch = false }) {
                   <div className={defaultTdContentTitleStyle}>Email</div>
                   <div className={defaultTdContent}>
                     <span className="whitespace-nowrap text-ellipsis overflow-hidden">
-                      {client.email}{" "}
+                      {client.clientEmail}{" "}
                     </span>
                   </div>
                 </div>

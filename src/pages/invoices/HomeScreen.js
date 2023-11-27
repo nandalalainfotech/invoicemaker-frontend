@@ -1,8 +1,13 @@
 import domtoimage from "dom-to-image";
 import { nanoid } from "nanoid";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import DatePicker from "react-datepicker";
-import { useFieldArray, useForm } from "react-hook-form";
 import NumberFormat from "react-number-format";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
@@ -13,30 +18,27 @@ import Button from "../../components/Button/Button";
 import PageTitle from "../../components/Common/PageTitle";
 import ClientPlusIcon from "../../components/Icons/ClientPlusIcon";
 import DeleteIcon from "../../components/Icons/DeleteIcon";
+import DollarIcon from "../../components/Icons/DollarIcon";
 import InvoiceIcon from "../../components/Icons/InvoiceIcon";
 import PlusCircleIcon from "../../components/Icons/PlusCircleIcon";
 import SecurityIcon from "../../components/Icons/SecurityIcon";
+import TaxesIcon from "../../components/Icons/TaxesIcon";
 import InvoiceTopBar from "../../components/Invoice/InvoiceTopBar";
-import {
-  IconStyle,
-  InputSmStyle,
-  defaultInputSmStyle,
-} from "../../constants/defaultStyles";
+import { IconStyle, defaultInputSmStyle } from "../../constants/defaultStyles";
 import { useAppContext } from "../../context/AppContext";
-
 import {
   getSelectedClient,
   setOpenClientSelector,
 } from "../../store/clientSlice";
 import { getCompanyData } from "../../store/companySlice";
-import { userList } from "../../store/invoiceListSlice";
 import {
-  InvoiceUserdetails,
+  // Invoicedetails,
   getAllInvoiceDetailSelector,
   getCurrentBGImage,
   getCurrentColor,
   getInvoiceNewForm,
   getIsConfirm,
+  setConfirmModalOpen,
   setDefaultBackground,
   setDefaultColor,
   setIsConfirm,
@@ -55,38 +57,13 @@ import {
   sumTotalAmount,
   sumTotalTaxes,
 } from "../../utils/match";
-import Axios from "axios";
-import fileDownload from "js-file-download";
-import { updateInvoice } from "../../store/invoiceUpdateSlice";
+import CheckCircleIcon from "../../components/Icons/CheckCircleIcon";
+import { useFieldArray, useForm } from "react-hook-form";
 
-function InvoiceDetailScreen(props) {
-  const invoiceId = useSelector((state) => state?.editInvoice);
-  const { item1 } = invoiceId;
-
+function HomeScreen(props) {
   const { handleSubmit, register, reset, control, getValues } = useForm({
     defaultValues: {
-      clientName: "",
-      clientAddress: "",
-      clientEmail: "",
-      clientNo: "",
-      invoiceNo: "",
-      changeCurrency: "",
-      createdDate: "",
-      dueDate: "",
-      products: "",
-      subTotal: "",
-      taxes: "",
-      userid: "",
-      Tax: "",
-      discount: "",
-      shipping: "",
-      balanceDue: "",
-      amount: "",
-      total: "",
-      test: item1?.test
-        ? item1?.test
-        : [{ Desc: "", qty: "", Rating: "", Amount: "" }],
-      balance: "balanceDue",
+      test: [{ Desc: "", qty: "", Rating: "", Amount: "" }],
     },
     mode: "onChange",
   });
@@ -110,10 +87,6 @@ function InvoiceDetailScreen(props) {
     removeAfterPrint: true,
   });
 
-  let userDetail = sessionStorage.getItem("user");
-  let userId = JSON.parse(userDetail);
-
-  // const EditId = item1?._id;
   const invoiceNewForm = useSelector(getInvoiceNewForm);
   const allInvoiceDetails = useSelector(getAllInvoiceDetailSelector);
   const company = useSelector(getCompanyData);
@@ -125,95 +98,67 @@ function InvoiceDetailScreen(props) {
   const [invoiceForm, setInvoiceForm] = useState(null);
   const [isViewMode, setIsViewMode] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  const [tax, setTax] = useState(item1?.Tax);
-  const [subTotals, setSubTotals] = useState(item1?.subtotal);
-  const [total, setTotal] = useState(item1?.Total);
-  const [discount, setDiscount] = useState(item1?.Discount);
-  const [shipping, setShipping] = useState(item1?.shipping);
-  const [balanceDue, setBalanceDue] = useState(item1?.Balance);
-  const [amount, setAmount] = useState(item1?.Amount);
+  const [creationDate, setCreationDate] = useState();
+  const [dueDate, setDueDate] = useState();
+  const [tax, setTax] = useState();
+  const [subTotals, setSubTotals] = useState();
+  const [total, setTotal] = useState();
+  const [discount, setDiscount] = useState();
+  const [shipping, setShipping] = useState();
+  const [balanceDue, setBalanceDue] = useState();
   const [balance, setBalance] = useState();
-  const [companyName, setCompanyName] = useState(item1?.CompanyName);
-  const [addCompany, setAddCompany] = useState(item1?.Company);
-  const [email, setEmail] = useState(item1?.Email);
-  const [mobileNo, setmobileNo] = useState(item1?.MobileNo);
-  const [creationDate, setCreationDate] = useState(item1?.createdDate);
-  const [dueDate, setDueDate] = useState(item1?.Duedate);
-
-  useEffect(() => {
-    setTax(item1?.Tax);
-    setDiscount(item1?.Discount);
-    setShipping(item1?.shipping);
-    setBalanceDue(item1?.Balance);
-    setAmount(item1?.Amount);
-    setSubTotals(item1?.subtotal);
-    setTotal(item1?.Total);
-    setCompanyName(item1?.CompanyName);
-    setAddCompany(item1?.Company);
-    setEmail(item1?.Email);
-    setmobileNo(item1?.MobileNo);
-    setCreationDate(item1?.createdDate);
-    setDueDate(item1?.Duedate);
-  }, [item1]);
-
+  const [amount, setAmount] = useState();
   const [statusData, setStatusData] = useState({
     statusName: "Draft",
     statusIndex: 1,
   });
 
-  // const handleExport = useCallback(() => {
-  //   if (showNavbar) {
-  //     toggleNavbar();
-  //   }
-  //   setEscapeOverflow(true);
-  //   setIsViewMode(true);
-  //   setIsExporting(true);
-  //   setTimeout(() => {
-  //     handlePrint();
-  //   }, 3000);
-  // }, [handlePrint, setEscapeOverflow, showNavbar, toggleNavbar]);
-  const fileDownload = require("js-file-download");
-
-  const exportPdf = () => {
-    Axios.get(`/api/invoices/downloadALLPDF`, {
-      responseType: "blob",
-      headers: {
-        "Content-Type": "application/pdf",
-      },
-    }).then((res) => {
-      const link = document.createElement("a");
-      fileDownload(res.data, "InvoiceSearchExport.pdf");
-      link.download = "output.pdf";
-      link.click();
-    });
-  };
+  const handleExport = useCallback(() => {
+    if (showNavbar) {
+      toggleNavbar();
+    }
+    if (userDetail) {
+      setEscapeOverflow(true);
+      setIsViewMode(true);
+      setIsExporting(true);
+      setTimeout(() => {
+        handlePrint();
+      }, 3000);
+    } else {
+      dispatch(setConfirmModalOpen(true));
+    }
+  }, [handlePrint, setEscapeOverflow, showNavbar, toggleNavbar]);
 
   const handleDownloadImg = useCallback(() => {
     if (showNavbar) {
       toggleNavbar();
     }
-    setEscapeOverflow(true);
-    setIsViewMode(true);
-    setIsExporting(true);
-    domtoimage
-      .toJpeg(componentRef.current, { quality: 1 })
-      .then(async (dataUrl) => {
-        try {
-          const res = await fetch(dataUrl);
-          const blob = await res.blob();
-          let a = document.createElement("a");
-          a.href = URL.createObjectURL(blob);
-          a.download = "invoice.jpeg";
-          a.hidden = true;
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-        } catch (e) {
-        } finally {
-          setIsExporting(false);
-          setEscapeOverflow(false);
-        }
-      });
+    if (userDetail) {
+      setEscapeOverflow(true);
+      setIsViewMode(true);
+      setIsExporting(true);
+      domtoimage
+        .toJpeg(componentRef.current, { quality: 1 })
+        .then(async (dataUrl) => {
+          try {
+            const res = await fetch(dataUrl);
+            const blob = await res.blob();
+            let a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "invoice.jpeg";
+            a.hidden = true;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+          } catch (e) {
+          } finally {
+            setIsExporting(false);
+            setEscapeOverflow(false);
+          }
+        });
+    } else {
+      dispatch(setConfirmModalOpen(true));
+    }
   }, [setEscapeOverflow, showNavbar, toggleNavbar]);
 
   const toggleViewMode = useCallback(() => {
@@ -246,27 +191,29 @@ function InvoiceDetailScreen(props) {
     dispatch(setOpenProductSelector(true));
   }, [dispatch]);
 
-  const handlerInvoiceValue = useCallback((event, keyName) => {
-    const value =
-      typeof event === "string" ? new Date(event) : event?.target?.value;
+  const addEmptyProduct = useCallback(() => {
+    const emptyProduct = {
+      id: nanoid(),
+      name: "",
+      productID: "",
+      amount: 1,
+      quantity: 1,
+    };
+
     setInvoiceForm((prev) => {
-      return { ...prev, [keyName]: value };
+      let updatedData = { ...prev };
+      const updateProducts = [...prev?.products, emptyProduct];
+      const subTotalAmount = sumProductTotal(updateProducts);
+      const updateTaxes = getTotalTaxesWithPercent(prev.taxes, subTotalAmount);
+      updatedData.products = updateProducts;
+      updatedData.taxes = updateTaxes;
+      updatedData.totalAmount = sumTotalAmount(
+        subTotalAmount,
+        sumTotalTaxes(updateTaxes)
+      );
+      return updatedData;
     });
   }, []);
-
-  const handlerInvoiceClientValue = useCallback((event, keyName) => {
-    const value =
-      typeof event === "string" ? new Date(event) : event?.target?.value;
-    setInvoiceForm((prev) => {
-      return {
-        ...prev,
-        clientDetail: { ...prev.clientDetail, [keyName]: value },
-        companyDetail: { ...prev.companyDetail, [keyName]: value },
-      };
-    });
-  }, []);
-
-  // console.log("EditId=====8899>", EditId)
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -328,106 +275,314 @@ function InvoiceDetailScreen(props) {
     setAmount(e.target.value);
   };
 
-  const saveInvoiceDetail = async (e) => {
-    e.preventDefault();
+  const onSubmit = async (e) => {
+
+    // e.preventDefault();
+    // console.log(
+    //   "invoiceForm.clientDetail.name--------------------->",
+    //   invoiceForm.clientDetail.name
+    // );
+
     const invoiceDetail = {
-      companyName: invoiceForm.companyDetail.companyName,
-      billingAddress: invoiceForm.companyDetail.billingAddress,
-      companyEmail: invoiceForm.companyDetail.companyEmail,
-      companyMobile: invoiceForm.companyDetail.companyMobile,
-      clientName: invoiceForm.clientDetail.name,
-      clientAddress: invoiceForm.clientDetail.clientAddress,
-      clientEmail: invoiceForm.clientDetail.email,
-      clientMobileNo: invoiceForm.clientDetail.mobileNo,
-      invoiceNo: invoiceForm.invoiceNo,
-      createdDate: invoiceForm.createdDate,
-      dueDate: invoiceForm.dueDate,
-      products: invoiceForm.products,
-      subTotal: invoiceForm.totalAmount,
+      clientName: e.clientName,
+      clientAddress: e.clientAddress,
+      clientEmail: e.clientEmail,
+      clientNo: e.clientNo,
+      invoiceNo: e.invoiceNo,
+      changeCurrency: e.changeCurrency,
+      createdDate: creationDate,
+      Duedate: dueDate,
+      test: e.test,
+      Tax: tax,
+      Discount: discount,
+      shipping: shipping,
+      Balance: balanceDue,
+      Amount: amount,
+      Total: total,
+      subtotal: subTotals,
     };
+
+    localStorage.setItem("details", JSON.stringify(invoiceDetail));
+
+
+    // dispatch(Invoicedetails(invoiceDetail)).then((result) => {
+    //     if (result.payload) {
+    //         Swal.fire('Invoice Details Saved Successfully');
+    //         // navigate('/')
+    //     }
+
+    // })
+    // try {
+    //   const response = await Axios.post('http://localhost:8000/api/invoices', invoiceDetail);
+    //   console.log("res------->", response.data);
+    // } catch (error) {
+    //   console.error(error);
+    // }
   };
 
-  const onSubmit = async (e) => {
-    if (params.id !== "new") {
-      let editId = params.id;
-      const clientDetail = {
-        clientName: e.clientName,
-        clientAddress: e.clientAddress,
-        clientEmail: e.clientEmail,
-        clientNo: e.clientNo,
-        invoiceNo: e.invoiceNo,
-        changeCurrency: e.changeCurrency,
-        createdDate: creationDate,
-        Duedate: dueDate,
-        test: e.test,
-        Tax: tax,
-        Discount: discount,
-        shipping: shipping,
-        Balance: balanceDue,
-        Amount: amount,
-        Total: total,
-        subtotal: subTotals,
-        Email: email,
-        MobileNo: mobileNo,
-        Company: addCompany,
-        CompanyName: companyName,
-        userid: userId.id,
-      };
-      dispatch(updateInvoice({ clientDetail, editId }));
-      // Swal.fire('Invoice Details Updated Successfully');
-    } else {
-      const clientDetail = {
-        clientName: e.clientName,
-        clientAddress: e.clientAddress,
-        clientEmail: e.clientEmail,
-        clientNo: e.clientNo,
-        invoiceNo: e.invoiceNo,
-        changeCurrency: e.changeCurrency,
-        createdDate: creationDate,
-        Duedate: dueDate,
-        test: e.test,
-        Tax: tax,
-        Discount: discount,
-        shipping: shipping,
-        Balance: balanceDue,
-        Amount: amount,
-        Total: total,
-        subtotal: subTotals,
-        Email: email,
-        MobileNo: mobileNo,
-        Company: addCompany,
-        CompanyName: companyName,
-        userid: userId.id,
-      };
-      dispatch(InvoiceUserdetails(clientDetail)).then((result) => {
-        if (result.payload) {
-          Swal.fire("Invoice Details Saved Successfully");
-          // navigate('/')
-          dispatch(userList());
-          window.location.reload(true);
+  const onDeleteProduct = useCallback((prodID) => {
+    setInvoiceForm((prev) => {
+      let updatedData = { ...prev };
+      const updateProducts = prev.products.filter((prod) => prod.id !== prodID);
+      const subTotalAmount = sumProductTotal(updateProducts);
+      const updateTaxes = getTotalTaxesWithPercent(prev.taxes, subTotalAmount);
+      updatedData.products = updateProducts;
+      updatedData.taxes = updateTaxes;
+      updatedData.totalAmount = sumTotalAmount(
+        subTotalAmount,
+        sumTotalTaxes(updateTaxes)
+      );
+      return updatedData;
+    });
+  }, []);
+
+  const handlerInvoiceValue = useCallback((event, keyName) => {
+    const value =
+      typeof event === "string" ? new Date(event) : event?.target?.value;
+
+    setInvoiceForm((prev) => {
+      return { ...prev, [keyName]: value };
+    });
+  }, []);
+
+  const handlerProductValue = useCallback(
+    (event, keyName, productID) => {
+      const value = event.target.value;
+
+      // If Keyname Price or Quantity must be only number
+      if (keyName === "quantity") {
+        if (!`${value}`.match(/^\d+$/)) {
+          return;
+        }
+      }
+
+      if (keyName === "amount") {
+        if (!`${value}`.match(/^[0-9]\d*(\.\d+)?$/)) {
+          return;
+        }
+      }
+
+      // Quantity Zero Case
+      if ((keyName === "quantity" || keyName === "amount") && value <= 0) {
+        return;
+      }
+
+      let updatedData = { ...invoiceForm };
+      let updateProducts = [...invoiceForm.products];
+
+      const isFindIndex = updateProducts.findIndex(
+        (prod) => prod.id === productID
+      );
+
+      if (isFindIndex !== -1) {
+        updateProducts[isFindIndex] = {
+          ...updateProducts[isFindIndex],
+          [keyName]: value,
+        };
+
+        updatedData.products = [...updateProducts];
+      }
+
+      if (keyName === "quantity" || keyName === "amount") {
+        const subTotalAmount = sumProductTotal(updateProducts);
+        const updateTaxes = getTotalTaxesWithPercent(
+          invoiceForm.taxes,
+          subTotalAmount
+        );
+        updatedData.taxes = updateTaxes;
+        updatedData.totalAmount = sumTotalAmount(
+          subTotalAmount,
+          sumTotalTaxes(updateTaxes)
+        );
+      }
+      setInvoiceForm(updatedData);
+    },
+    [invoiceForm]
+  );
+
+  const handlerTaxesValue = useCallback(
+    (event, keyName, taxID) => {
+      const value = event.target.value;
+      let updateTaxes = [...invoiceForm.taxes];
+      const isFindIndex = updateTaxes.findIndex((prod) => prod.id === taxID);
+      if (isFindIndex === -1) {
+        return;
+      }
+      const currentTax = updateTaxes[isFindIndex];
+
+      if (currentTax.type === "percentage" && keyName === "value") {
+        if (!`${value}`.match(/^[0-9]\d*(\.\d+)?$/)) {
+          return;
+        }
+
+        if (value <= 0 || value > 100) {
+          return;
+        }
+      }
+
+      if (currentTax.type === "flat" && keyName === "value") {
+        if (!`${value}`.match(/^[0-9]\d*(\.\d+)?$/)) {
+          return;
+        }
+
+        if (value <= 0) {
+          return;
+        }
+      }
+
+      setInvoiceForm((prev) => {
+        let taxes = [...prev.taxes];
+
+        if (keyName === "value") {
+          const subTotalAmount = sumProductTotal(prev.products);
+          const amount = (value / 100) * subTotalAmount;
+          taxes[isFindIndex] = {
+            ...taxes[isFindIndex],
+            [keyName]: value,
+            amount: currentTax.type !== "percentage" ? value : amount,
+          };
+          const totalAmount = sumTotalAmount(
+            subTotalAmount,
+            sumTotalTaxes(taxes)
+          );
+          return { ...prev, taxes: taxes, totalAmount: totalAmount };
+        } else {
+          taxes[isFindIndex] = {
+            ...taxes[isFindIndex],
+            [keyName]: value,
+          };
+          return { ...prev, taxes: taxes };
         }
       });
-    }
-  };
+    },
+    [invoiceForm]
+  );
 
-  useEffect(() => {
-    if (params.id !== "new") {
-      let defaultValues = {
-        clientName: item1?.clientName,
-        clientAddress: item1?.clientAddress,
-        clientEmail: item1?.clientEmail,
-        clientNo: item1?.clientNo,
-        invoiceNo: item1?.invoiceNo,
-        changeCurrency: item1?.changeCurrency,
-        createdDate: item1?.createdDate,
-        dueDate: item1?.dueDate,
-        test: item1?.test,
+  const handlerInvoiceClientValue = useCallback((event, keyName) => {
+    const value =
+      typeof event === "string" ? new Date(event) : event?.target?.value;
+
+    setInvoiceForm((prev) => {
+      return {
+        ...prev,
+        clientDetail: { ...prev.clientDetail, [keyName]: value },
       };
-      reset({
-        ...defaultValues,
-      });
+    });
+  }, []);
+
+  // Calculation for Showing
+  const subTotal = useMemo(() => {
+    if (!invoiceForm) {
+      return 0;
     }
-  }, [params.id, item1]);
+
+    if (!invoiceForm?.products) {
+      return 0;
+    }
+    return sumProductTotal(invoiceForm.products);
+  }, [invoiceForm]);
+
+  const totalPercentTax = useMemo(() => {
+    const isSomeTax = invoiceForm?.taxes?.some(
+      (tax) => tax.type === "percentage"
+    );
+
+    if (!isSomeTax) {
+      return 0;
+    }
+
+    const findIndex = invoiceForm?.taxes?.findIndex(
+      (tax) => tax.type === "percentage"
+    );
+
+    return findIndex !== -1
+      ? Number.isInteger(invoiceForm.taxes[findIndex].amount)
+        ? invoiceForm.taxes[findIndex].amount
+        : invoiceForm.taxes[findIndex].amount.toFixed(4).toString().slice(0, -2)
+      : 0;
+  }, [invoiceForm]);
+
+  const addPercentageTax = useCallback(() => {
+    const isSomeTaxes = invoiceForm.taxes.some(
+      (form) => form.type === "percentage"
+    );
+
+    if (isSomeTaxes) {
+      toast.error("Already Have Percentage Taxes!", {
+        position: "bottom-center",
+        autoClose: 2000,
+      });
+      return;
+    }
+
+    setInvoiceForm((prev) => {
+      const subTotalAmount = sumProductTotal(prev.products);
+      const amount = (10 / 100) * subTotalAmount;
+      const percentageTax = {
+        id: nanoid(),
+        title: "Tax %",
+        type: "percentage",
+        value: 10,
+        amount,
+      };
+      const updateTaxes = [percentageTax, ...prev.taxes];
+      const totalAmount = sumTotalAmount(
+        subTotalAmount,
+        sumTotalTaxes(updateTaxes)
+      );
+
+      return {
+        ...prev,
+        taxes: updateTaxes,
+        totalAmount: totalAmount,
+      };
+    });
+  }, [invoiceForm]);
+
+  const addEmptyTax = useCallback(() => {
+    setInvoiceForm((prev) => {
+      const subTotalAmount = sumProductTotal(prev.products);
+      const emptyTax = {
+        id: nanoid(),
+        title: "Extra Fees",
+        type: "flat",
+        value: 1,
+        amount: 1,
+      };
+      const updateTaxes = [...prev.taxes, emptyTax];
+      const totalAmount = sumTotalAmount(
+        subTotalAmount,
+        sumTotalTaxes(updateTaxes)
+      );
+      return { ...prev, taxes: updateTaxes, totalAmount };
+    });
+  }, []);
+
+  const onDeleteTax = useCallback((taxID) => {
+    setInvoiceForm((prev) => {
+      const updateTaxes = prev.taxes.filter((prod) => prod.id !== taxID);
+      let updatedData = { ...prev, taxes: updateTaxes };
+      const subTotalAmount = sumProductTotal(prev.products);
+      const totalAmount = sumTotalAmount(
+        subTotalAmount,
+        sumTotalTaxes(updateTaxes)
+      );
+      updatedData.totalAmount = totalAmount;
+      return updatedData;
+    });
+  }, []);
+
+  const saveAs = useCallback(
+    (status) => {
+      setStatusData({
+        statusIndex: status === "Draft" ? "1" : status === "Unpaid" ? "2" : "3",
+        statusName: status,
+      });
+      // dispatch(setConfirmModalOpen(true));
+      Swal.fire("Invoice Details Saved Successfully");
+    },
+    [dispatch]
+  );
 
   const goInvoiceList = useCallback(() => {
     // navigate("/invoices");
@@ -491,6 +646,13 @@ function InvoiceDetailScreen(props) {
         // navigate("/");
         if (!getInvoiceDetail) {
           // navigate("/invoices");
+
+          setInvoiceForm({
+            ...invoiceNewForm,
+            companyDetail: { ...company },
+            dueDate: new Date(invoiceNewForm.dueDate),
+            createdDate: new Date(),
+          });
           return;
         } else {
           setInvoiceForm({
@@ -548,6 +710,9 @@ function InvoiceDetailScreen(props) {
     }
   }, [currentBg, currentColor, initLoading]);
 
+  const { user } = useSelector((state) => state.user);
+  let userDetail = sessionStorage.getItem("user", JSON.stringify("user"));
+
   // On Confirm Dependencies
   useEffect(() => {
     if (isConfirm) {
@@ -585,15 +750,13 @@ function InvoiceDetailScreen(props) {
     }
   }, [dispatch, invoiceForm, isConfirm, navigate, params, statusData]);
 
-  // console.log("ite1--------------->", item1);
-
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <div className="p-4">
         <PageTitle
           title={
             <>
-              {params.id === "new"
+              {params.id !== "new"
                 ? "New Invoice"
                 : `Invoice Detail ${invoiceForm?.statusName}`}
             </>
@@ -606,7 +769,7 @@ function InvoiceDetailScreen(props) {
           viewMode={isViewMode}
           onClickViewAs={toggleViewMode}
           onClickSetting={openSettingModal}
-          onClickExport={exportPdf}
+          onClickExport={handleExport}
           onClickDownloadImg={handleDownloadImg}
         />
       </div>
@@ -654,38 +817,24 @@ function InvoiceDetailScreen(props) {
               <div
                 className={
                   isExporting
-                    ? " font-title text-left"
-                    : " font-title text-center sm:text-left"
+                    ? "text-white font-title text-left"
+                    : "text-white font-title text-center sm:text-left"
                 }
               >
-                <input
-                  placeholder="Company Name"
-                  className={InputSmStyle + "text-sm font-medium "}
-                  style={{ marginBottom: "5px" }}
-                  onChange={(e) => setCompanyName(e.target.value)}
-                  value={companyName ? companyName : ""}
-                />
-                <input
-                  placeholder="Plz add First Company Data"
-                  className={InputSmStyle + "text-sm font-medium "}
-                  style={{ marginBottom: "5px" }}
-                  onChange={(e) => setAddCompany(e.target.value)}
-                  value={addCompany ? addCompany : ""}
-                />
-                <input
-                  placeholder="Company Phone"
-                  className={InputSmStyle + "text-sm font-medium"}
-                  style={{ marginBottom: "5px" }}
-                  onChange={(e) => setmobileNo(e.target.value)}
-                  value={mobileNo ? mobileNo : ""}
-                />
-                <input
-                  autoComplete="nope"
-                  placeholder=" Company@email.com"
-                  className={InputSmStyle + "text-sm font-medium"}
-                  onChange={(e) => setEmail(e.target.value)}
-                  value={email ? email : ""}
-                />
+                <p className="font-bold mb-2">
+                  {invoiceForm?.companyDetail?.companyName || "Company Name"}
+                </p>
+                <p className="text-sm font-medium">
+                  {invoiceForm?.companyDetail?.billingAddress ||
+                    "Plz add First Company Data"}
+                </p>
+                <p className="text-sm font-medium">
+                  {invoiceForm?.companyDetail?.companyMobile || "Company Ph"}
+                </p>
+                <p className="text-sm font-medium">
+                  {invoiceForm?.companyDetail?.companyEmail ||
+                    "Company@email.com"}
+                </p>
               </div>
             </div>
             <div className="text-white font-title font-bold text-5xl mt-5 sm:mt-0">
@@ -728,7 +877,7 @@ function InvoiceDetailScreen(props) {
                       // onChange={(e) => handlerInvoiceClientValue(e, "name")}
                     />
                   ) : (
-                    item1?.clientName
+                    invoiceForm?.clientDetail?.clientName
                   )}
                 </div>
                 <div
@@ -1356,7 +1505,7 @@ function InvoiceDetailScreen(props) {
               >
                 <input
                   className={defaultInputSmStyle + " text-right"}
-                  // value={" Balance Due"}
+                  value={" Balance Due"}
                   {...register("balance")}
                   onChange={(e) => setBalance(e.target.value)}
                 />
@@ -1432,34 +1581,30 @@ function InvoiceDetailScreen(props) {
         <div className="px-4 pt-3">
           <div className="bg-white rounded-xl px-3 py-3">
             <div className="flex flex-col flex-wrap sm:flex-row justify-end">
-              {/* {params.id === "new" && (
-                <div className="w-full flex-1 my-1 sm:my-1 md:my-0 px-1">
-                  <Button
-                    outlined={1}
-                    size="sm"
-                    block={1}
-                    secondary={1}
-                    onClick={(e) => { saveAs("Draft"); saveInvoiceDetail(e) }}
-                  >
-                    <CheckCircleIcon className="h-5 w-5 mr-1" /> Save As Draft
-                  </Button>
-                </div>
-              )}
-              {invoiceForm?.statusIndex !== "2" && (
-                <div className="w-full flex-1 my-1 sm:my-1 md:my-0 px-1">
-                  <Button
-                    outlined={1}
-                    size="sm"
-                    block={1}
-                    danger={1}
-                    onClick={() => saveAs("Unpaid")}
-                  >
-                    <DollarIcon className="h-5 w-5 mr-1" />{" "}
-                    {params.id === "new" ? "Save" : "Update"} As Unpaid
-                  </Button>
-                </div>
-              )} */}
-              <div className="w-1/2   my-1 sm:my-1 md:my-0 px-1  ">
+              {/* <div className="w-full flex-1 my-1 sm:my-1 md:my-0 px-1">
+                            <Button
+                                outlined={1}
+                                size="sm"
+                                block={1}
+                                secondary={1}
+                                onClick={() => saveAs("Draft")}
+                            >
+                                <CheckCircleIcon className="h-5 w-5 mr-1" /> Save As Draft
+                            </Button>
+                        </div> */}
+              {/* <div className="w-full flex-1 my-1 sm:my-1 md:my-0 px-1">
+                            <Button
+                                outlined={1}
+                                size="sm"
+                                block={1}
+                                danger={1}
+                                onClick={() => saveAs("Unpaid")}
+                            >
+                                <DollarIcon className="h-5 w-5 mr-1" />{" "}
+                                {params.id !== "new" ? "Save" : "Update"} As Unpaid
+                            </Button>
+                        </div> */}
+              <div className="w-1/2  my-1 sm:my-1 md:my-0 px-1 ">
                 <Button
                   size="sm"
                   block={1}
@@ -1468,28 +1613,28 @@ function InvoiceDetailScreen(props) {
                   // onClick={(e) => { saveInvoiceDetail(e) }}
                 >
                   <SecurityIcon className="h-5 w-5 mr-1" />{" "}
-                  {params.id === "new" ? "Save" : "Update"} As Paid
+                  {params.id !== "new" ? "Save" : "Update"} As Paid
                 </Button>
               </div>
             </div>
           </div>
         </div>
       )}
-      {/* 
-      {invoiceForm && (
-        <div className="p-4">
-          <InvoiceTopBar
-            onClickBack={goInvoiceList}
-            viewMode={isViewMode}
-            onClickViewAs={toggleViewMode}
-            onClickSetting={openSettingModal}
-            onClickExport={exportPdf}
-            onClickDownloadImg={handleDownloadImg}
-          />
-        </div>
-      )} */}
+
+      {/* {invoiceForm && (
+                <div className="p-4">
+                    <InvoiceTopBar
+                        onClickBack={goInvoiceList}
+                        viewMode={isViewMode}
+                        onClickViewAs={toggleViewMode}
+                        onClickSetting={openSettingModal}
+                        onClickExport={handleExport}
+                        onClickDownloadImg={handleDownloadImg}
+                    />
+                </div>
+            )} */}
     </form>
   );
 }
 
-export default InvoiceDetailScreen;
+export default HomeScreen;

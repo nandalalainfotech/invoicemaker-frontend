@@ -5,7 +5,7 @@ export const saveLocaleData = async (key, data) => {
     await localforage.setItem(key, data);
     return true;
   } catch (e) {
-    console.log(e);
+    // console.log(e);
     return false;
   }
 };
@@ -15,7 +15,7 @@ export const retrieveLocalData = async (key) => {
     const data = localforage(key);
     return data;
   } catch (e) {
-    console.log(e);
+    // console.log(e);
     return "";
   }
 };

@@ -33,7 +33,6 @@ export const companySlice = createSlice({
         state.data.companyMobile = companyMobile ? companyMobile : "";
         localforage.setItem(COMPANY_KEY, action.payload);
       } catch (e) {
-        console.log(e);
       }
     },
   },
