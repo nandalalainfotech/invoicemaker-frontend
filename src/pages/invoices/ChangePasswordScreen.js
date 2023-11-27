@@ -9,7 +9,6 @@ const ChangePasswordScreen = () => {
 
   const [password, setPassword] = useState('');
 
-  console.log("password----->", password);
   const [cpassword, setcPassword] = useState('');
 
   const dispatch = useDispatch();

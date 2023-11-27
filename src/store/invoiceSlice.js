@@ -58,8 +58,6 @@ const initialState = {
 export const InvoiceUserdetails = createAsyncThunk(
   'invoice/UserInvoicedetails',
   async (invoices) => {
-    console.log("clientDetail2222222222222222222=====>", invoices)
-
     const request = await Axios.post('/api/invoices/invoicedetail', invoices);
     const response = await request.data;
     return response
