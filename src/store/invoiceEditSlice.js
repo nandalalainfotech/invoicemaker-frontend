@@ -6,7 +6,6 @@ export const editInvoice = createAsyncThunk(
     async (item1) => {
         // console.log("register-------->", item1);
         const request = await Axios.get(`/api/invoices/editInvoice/${item1}`);
-        console.log('request====>', request)
         const response = await request.data;
         return response
     }
@@ -26,7 +25,6 @@ export const invoiceEditSlice = createSlice({
             state.error = null;
         })
             .addCase(editInvoice.fulfilled, (state, action) => {
-                console.log("action-------->", action)
                 state.loading = false;
                 state.success = true;
                 state.item1 = action.payload;

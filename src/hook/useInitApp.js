@@ -94,7 +94,6 @@ const useInitApp = () => {
 
 
     } catch (e) {
-      console.log(e);
     } finally {
       setInitLoading(false);
     }

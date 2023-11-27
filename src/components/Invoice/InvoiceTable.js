@@ -112,7 +112,7 @@ function InvoiceTable({ showAdvanceSearch = false }) {
   const handleDelete = useCallback(
     (id) => {
       dispatch(deleteInvoice(id._id))
-
+      window.location.reload(true);
     },
     [dispatch]
   )
@@ -121,7 +121,6 @@ function InvoiceTable({ showAdvanceSearch = false }) {
   const invoicelist = useSelector((state) => state.userList)
   const invoiceDetailList = invoicelist.userdetailList
 
-  console.log("item1---===0-=-", invoiceDetailList)
 
 
   // const deletedID = useSelector((state) => state?.deleteSlice)
@@ -203,7 +202,6 @@ function InvoiceTable({ showAdvanceSearch = false }) {
             ?.filter((item) => {
               return item?.userid === invoDetail.id
             })?.map((item1) => (
-              console.log("item33----->", item1),
               < div className={defaultTdWrapperStyle} key={item1?.id}>
                 <div className={defaultTdStyle}>
                   <div className={defaultTdContentTitleStyle}>Invoice Name</div>

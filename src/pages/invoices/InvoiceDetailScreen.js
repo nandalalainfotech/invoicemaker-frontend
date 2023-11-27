@@ -1,11 +1,6 @@
 import domtoimage from "dom-to-image";
 import { nanoid } from "nanoid";
-import React, {
-  useCallback,
-  useEffect,
-  useRef,
-  useState
-} from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import DatePicker from "react-datepicker";
 import { useFieldArray, useForm } from "react-hook-form";
 import NumberFormat from "react-number-format";
@@ -13,7 +8,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import { useReactToPrint } from "react-to-print";
 import { toast } from "react-toastify";
-import Swal from 'sweetalert2';
+import Swal from "sweetalert2";
 import Button from "../../components/Button/Button";
 import PageTitle from "../../components/Common/PageTitle";
 import ClientPlusIcon from "../../components/Icons/ClientPlusIcon";
@@ -22,7 +17,11 @@ import InvoiceIcon from "../../components/Icons/InvoiceIcon";
 import PlusCircleIcon from "../../components/Icons/PlusCircleIcon";
 import SecurityIcon from "../../components/Icons/SecurityIcon";
 import InvoiceTopBar from "../../components/Invoice/InvoiceTopBar";
-import { IconStyle, InputSmStyle, defaultInputSmStyle } from "../../constants/defaultStyles";
+import {
+  IconStyle,
+  InputSmStyle,
+  defaultInputSmStyle,
+} from "../../constants/defaultStyles";
 import { useAppContext } from "../../context/AppContext";
 
 import {
@@ -44,7 +43,7 @@ import {
   setNewInvoices,
   setSettingModalOpen,
   updateExisitingInvoiceForm,
-  updateNewInvoiceForm
+  updateNewInvoiceForm,
 } from "../../store/invoiceSlice";
 import {
   getSelectedProduct,
@@ -57,22 +56,16 @@ import {
   sumTotalTaxes,
 } from "../../utils/match";
 import Axios from "axios";
-import fileDownload from "js-file-download"
+import fileDownload from "js-file-download";
 import { updateInvoice } from "../../store/invoiceUpdateSlice";
 
 function InvoiceDetailScreen(props) {
-  const invoiceId = useSelector((state) => state?.editInvoice)
-  const { item1 } = invoiceId
+  const invoiceId = useSelector((state) => state?.editInvoice);
+  const { item1 } = invoiceId;
 
-  const {
-    handleSubmit,
-    register,
-    reset,
-    control,
-    getValues,
-  } = useForm({
+  const { handleSubmit, register, reset, control, getValues } = useForm({
     defaultValues: {
-      clientName: '',
+      clientName: "",
       clientAddress: "",
       clientEmail: "",
       clientNo: "",
@@ -90,13 +83,13 @@ function InvoiceDetailScreen(props) {
       balanceDue: "",
       amount: "",
       total: "",
-      test:
-        item1?.test ? item1?.test : [{ Desc: "", qty: "", Rating: "", Amount: "" },
-        ],
-      balance: "balanceDue"
+      test: item1?.test
+        ? item1?.test
+        : [{ Desc: "", qty: "", Rating: "", Amount: "" }],
+      balance: "balanceDue",
     },
     mode: "onChange",
-  })
+  });
   const { initLoading, showNavbar, toggleNavbar, setEscapeOverflow } =
     useAppContext();
   const params = useParams();
@@ -117,9 +110,8 @@ function InvoiceDetailScreen(props) {
     removeAfterPrint: true,
   });
 
-  let userDetail = sessionStorage.getItem('user');
-  let userId = JSON.parse(userDetail)
-
+  let userDetail = sessionStorage.getItem("user");
+  let userId = JSON.parse(userDetail);
 
   // const EditId = item1?._id;
   const invoiceNewForm = useSelector(getInvoiceNewForm);
@@ -143,27 +135,26 @@ function InvoiceDetailScreen(props) {
   const [balance, setBalance] = useState();
   const [companyName, setCompanyName] = useState(item1?.CompanyName);
   const [addCompany, setAddCompany] = useState(item1?.Company);
-  const [email, setEmail] = useState(item1?.Email)
+  const [email, setEmail] = useState(item1?.Email);
   const [mobileNo, setmobileNo] = useState(item1?.MobileNo);
   const [creationDate, setCreationDate] = useState(item1?.createdDate);
   const [dueDate, setDueDate] = useState(item1?.Duedate);
 
-
   useEffect(() => {
-    setTax(item1?.Tax)
-    setDiscount(item1?.Discount)
-    setShipping(item1?.shipping)
-    setBalanceDue(item1?.Balance)
-    setAmount(item1?.Amount)
-    setSubTotals(item1?.subtotal)
-    setTotal(item1?.Total)
-    setCompanyName(item1?.CompanyName)
-    setAddCompany(item1?.Company)
-    setEmail(item1?.Email)
-    setmobileNo(item1?.MobileNo)
-    setCreationDate(item1?.createdDate)
-    setDueDate(item1?.Duedate)
-  }, [item1])
+    setTax(item1?.Tax);
+    setDiscount(item1?.Discount);
+    setShipping(item1?.shipping);
+    setBalanceDue(item1?.Balance);
+    setAmount(item1?.Amount);
+    setSubTotals(item1?.subtotal);
+    setTotal(item1?.Total);
+    setCompanyName(item1?.CompanyName);
+    setAddCompany(item1?.Company);
+    setEmail(item1?.Email);
+    setmobileNo(item1?.MobileNo);
+    setCreationDate(item1?.createdDate);
+    setDueDate(item1?.Duedate);
+  }, [item1]);
 
   const [statusData, setStatusData] = useState({
     statusName: "Draft",
@@ -197,7 +188,6 @@ function InvoiceDetailScreen(props) {
     });
   };
 
-
   const handleDownloadImg = useCallback(() => {
     if (showNavbar) {
       toggleNavbar();
@@ -219,7 +209,6 @@ function InvoiceDetailScreen(props) {
           a.click();
           a.remove();
         } catch (e) {
-          console.log(e);
         } finally {
           setIsExporting(false);
           setEscapeOverflow(false);
@@ -265,9 +254,9 @@ function InvoiceDetailScreen(props) {
     });
   }, []);
 
-
   const handlerInvoiceClientValue = useCallback((event, keyName) => {
-    const value = typeof event === "string" ? new Date(event) : event?.target?.value;
+    const value =
+      typeof event === "string" ? new Date(event) : event?.target?.value;
     setInvoiceForm((prev) => {
       return {
         ...prev,
@@ -276,7 +265,6 @@ function InvoiceDetailScreen(props) {
       };
     });
   }, []);
-
 
   // console.log("EditId=====8899>", EditId)
 
@@ -290,7 +278,6 @@ function InvoiceDetailScreen(props) {
   //   name: "test",
   // });
 
-
   const handleappendupdate = () => {
     append({ Desc: "", qty: "", Rating: "", Amount: "" });
   };
@@ -299,45 +286,47 @@ function InvoiceDetailScreen(props) {
     let subamount = 0;
     const arr = getValues().test.map((item) => {
       // console.log("item-------arrrrrrrrrrrr-----", item);
-      item.Amount = item.qty && item.Rating ? parseInt(item.qty) * parseInt(item.Rating) : 0;
+      item.Amount =
+        item.qty && item.Rating
+          ? parseInt(item.qty) * parseInt(item.Rating)
+          : 0;
       subamount = subamount + item.Amount;
       // console.log("subamount-------arrrrrrrrrrrr-----", subamount);
-    })
+    });
     setSubTotals(subamount);
   };
 
   const handleDiscountValue = (e) => {
     let dis = e.target.value;
     let discount = dis / 100;
-    let discountvalue = subTotals - (subTotals * discount)
-    setTotal(discountvalue)
-    setDiscount(e.target.value)
-  }
+    let discountvalue = subTotals - subTotals * discount;
+    setTotal(discountvalue);
+    setDiscount(e.target.value);
+  };
 
   const handleTaxValue = (e) => {
     let discounts = discount / 100;
-    let discountvalue = subTotals - (subTotals * discounts)
+    let discountvalue = subTotals - subTotals * discounts;
     let tax = (parseInt(e.target.value ? e.target.value : 0) / 100) * subTotals;
-    let calculate = discountvalue + tax
-    setTotal(calculate)
-    setTax(e.target.value)
-  }
-
+    let calculate = discountvalue + tax;
+    setTotal(calculate);
+    setTax(e.target.value);
+  };
 
   const handleShipping = (e) => {
     let discounts = discount / 100;
-    let discountvalue = subTotals - (subTotals * discounts)
+    let discountvalue = subTotals - subTotals * discounts;
     let taxs = (tax / 100) * subTotals;
     let calculate = discountvalue + taxs + parseInt(e.target.value);
-    setTotal(calculate)
-    setShipping(e.target.value)
-  }
+    setTotal(calculate);
+    setShipping(e.target.value);
+  };
 
   const handlePaidAmount = (e) => {
-    let balance = total - e.target.value
-    setBalanceDue(balance)
-    setAmount(e.target.value)
-  }
+    let balance = total - e.target.value;
+    setBalanceDue(balance);
+    setAmount(e.target.value);
+  };
 
   const saveInvoiceDetail = async (e) => {
     e.preventDefault();
@@ -354,16 +343,13 @@ function InvoiceDetailScreen(props) {
       createdDate: invoiceForm.createdDate,
       dueDate: invoiceForm.dueDate,
       products: invoiceForm.products,
-      subTotal: invoiceForm.totalAmount
-    }
+      subTotal: invoiceForm.totalAmount,
+    };
   };
 
   const onSubmit = async (e) => {
-
-    if (params.id) {
+    if (params.id !== "new") {
       let editId = params.id;
-      console.log("e.clientName", params.id);
-
       const clientDetail = {
         clientName: e.clientName,
         clientAddress: e.clientAddress,
@@ -386,14 +372,9 @@ function InvoiceDetailScreen(props) {
         Company: addCompany,
         CompanyName: companyName,
         userid: userId.id,
-
-      }
-
-
-      dispatch(updateInvoice({ clientDetail, editId }))
-
+      };
+      dispatch(updateInvoice({ clientDetail, editId }));
       // Swal.fire('Invoice Details Updated Successfully');
-
     } else {
       const clientDetail = {
         clientName: e.clientName,
@@ -417,24 +398,20 @@ function InvoiceDetailScreen(props) {
         Company: addCompany,
         CompanyName: companyName,
         userid: userId.id,
-
-      }
-      console.log("clientDetail=====>2", clientDetail)
-
+      };
       dispatch(InvoiceUserdetails(clientDetail)).then((result) => {
         if (result.payload) {
-          Swal.fire('Invoice Details Saved Successfully');
+          Swal.fire("Invoice Details Saved Successfully");
           // navigate('/')
           dispatch(userList());
+          window.location.reload(true);
         }
-      })
+      });
     }
-
-  }
+  };
 
   useEffect(() => {
     if (params.id !== "new") {
-      console.log("item1 =====>", item1)
       let defaultValues = {
         clientName: item1?.clientName,
         clientAddress: item1?.clientAddress,
@@ -445,13 +422,12 @@ function InvoiceDetailScreen(props) {
         createdDate: item1?.createdDate,
         dueDate: item1?.dueDate,
         test: item1?.test,
-      }
+      };
       reset({
         ...defaultValues,
-      })
+      });
     }
-  }, [params.id, item1])
-
+  }, [params.id, item1]);
 
   const goInvoiceList = useCallback(() => {
     // navigate("/invoices");
@@ -609,7 +585,6 @@ function InvoiceDetailScreen(props) {
     }
   }, [dispatch, invoiceForm, isConfirm, navigate, params, statusData]);
 
-
   // console.log("ite1--------------->", item1);
 
   return (
@@ -684,7 +659,6 @@ function InvoiceDetailScreen(props) {
                 }
               >
                 <input
-
                   placeholder="Company Name"
                   className={InputSmStyle + "text-sm font-medium "}
                   style={{ marginBottom: "5px" }}
@@ -692,22 +666,18 @@ function InvoiceDetailScreen(props) {
                   value={companyName ? companyName : ""}
                 />
                 <input
-
                   placeholder="Plz add First Company Data"
                   className={InputSmStyle + "text-sm font-medium "}
                   style={{ marginBottom: "5px" }}
                   onChange={(e) => setAddCompany(e.target.value)}
                   value={addCompany ? addCompany : ""}
-
                 />
                 <input
-
                   placeholder="Company Phone"
                   className={InputSmStyle + "text-sm font-medium"}
                   style={{ marginBottom: "5px" }}
                   onChange={(e) => setmobileNo(e.target.value)}
                   value={mobileNo ? mobileNo : ""}
-
                 />
                 <input
                   autoComplete="nope"
@@ -715,8 +685,6 @@ function InvoiceDetailScreen(props) {
                   className={InputSmStyle + "text-sm font-medium"}
                   onChange={(e) => setEmail(e.target.value)}
                   value={email ? email : ""}
-
-
                 />
               </div>
             </div>
@@ -757,7 +725,7 @@ function InvoiceDetailScreen(props) {
                       placeholder="Client Name"
                       {...register("clientName")}
                       className={defaultInputSmStyle}
-                    // onChange={(e) => handlerInvoiceClientValue(e, "name")}
+                      // onChange={(e) => handlerInvoiceClientValue(e, "name")}
                     />
                   ) : (
                     item1?.clientName
@@ -793,7 +761,6 @@ function InvoiceDetailScreen(props) {
                       autoComplete="nope"
                       placeholder="Client Mobile"
                       {...register("clientNo")}
-
                       className={defaultInputSmStyle}
                       // value={invoiceForm?.clientDetail?.mobileNo}
                       onChange={(e) => handlerInvoiceClientValue(e, "mobileNo")}
@@ -832,7 +799,6 @@ function InvoiceDetailScreen(props) {
                       autoComplete="nope"
                       placeholder="Invoice No"
                       {...register("invoiceNo")}
-
                       className={defaultInputSmStyle + " text-right"}
                       // value={invoiceForm.invoiceNo}
                       onChange={(e) => handlerInvoiceValue(e, "invoiceNo")}
@@ -869,7 +835,6 @@ function InvoiceDetailScreen(props) {
                     }
                     onChange={(e) => setDueDate(e.target.value)}
                     value={dueDate ? dueDate : ""}
-
                   />
                 </div>
               </div>
@@ -945,158 +910,157 @@ function InvoiceDetailScreen(props) {
               </div>
             </div>
 
-            {fields ? (<>
-              {fields.map(({ id }, index) => {
-                return (
-                  <div
-                    className={
-                      (isExporting
-                        ? "flex flex-row rounded-lg w-full px-4 py-1 items-center relative text-sm"
-                        : "flex flex-col sm:flex-row rounded-lg sm:visible w-full px-4 py-2 items-center relative") +
-                      (" bg-gray-50 ")
-                    }
-                  >
+            {fields ? (
+              <>
+                {fields.map(({ id }, index) => {
+                  return (
                     <div
                       className={
-                        isExporting
-                          ? "font-title w-1/4 text-right pr-8 flex flex-row block"
-                          : "font-title w-full sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block"
+                        (isExporting
+                          ? "flex flex-row rounded-lg w-full px-4 py-1 items-center relative text-sm"
+                          : "flex flex-col sm:flex-row rounded-lg sm:visible w-full px-4 py-2 items-center relative") +
+                        " bg-gray-50 "
                       }
                     >
-                      {!isExporting && (
-                        <span className="sm:hidden w-1/2 flex flex-row items-center">
-                          Description
-                        </span>
-                      )}
-                      <span
+                      <div
                         className={
                           isExporting
-                            ? "inline-block w-full mb-0"
-                            : "inline-block w-1/2 sm:w-full mb-1 sm:mb-0"
+                            ? "font-title w-1/4 text-right pr-8 flex flex-row block"
+                            : "font-title w-full sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block"
                         }
                       >
-                        {!isViewMode ? (
-                          <input
-                            autoComplete="nope"
-                            // value={product.name}
-                            name={`test.${index}.Desc`}
-                            {...register(`test.${index}.Desc`, {
-                              required: false,
-                            })}
-                            placeholder="Product Name"
-                            className={defaultInputSmStyle + " text-right"}
-
-                          />
-                        ) : (
-                          <span className="pr-3"></span>
+                        {!isExporting && (
+                          <span className="sm:hidden w-1/2 flex flex-row items-center">
+                            Description
+                          </span>
                         )}
-                      </span>
-                    </div>
-                    <div
-                      className={
-                        isExporting
-                          ? "font-title w-1/4 text-right pr-8 flex flex-row block"
-                          : "font-title w-full sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block"
-                      }
-                    >
-                      {!isExporting && (
-                        <span className="sm:hidden w-1/2 flex flex-row items-center">
-                          Price
+                        <span
+                          className={
+                            isExporting
+                              ? "inline-block w-full mb-0"
+                              : "inline-block w-1/2 sm:w-full mb-1 sm:mb-0"
+                          }
+                        >
+                          {!isViewMode ? (
+                            <input
+                              autoComplete="nope"
+                              // value={product.name}
+                              name={`test.${index}.Desc`}
+                              {...register(`test.${index}.Desc`, {
+                                required: false,
+                              })}
+                              placeholder="Product Name"
+                              className={defaultInputSmStyle + " text-right"}
+                            />
+                          ) : (
+                            <span className="pr-3"></span>
+                          )}
                         </span>
-                      )}
-                      <span
+                      </div>
+                      <div
                         className={
                           isExporting
-                            ? "inline-block w-full mb-0"
-                            : "inline-block w-1/2 sm:w-full mb-1 sm:mb-0"
+                            ? "font-title w-1/4 text-right pr-8 flex flex-row block"
+                            : "font-title w-full sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block"
                         }
                       >
-                        {!isViewMode ? (
-                          <input
-                            autoComplete="nope"
-                            // value={product.amount}
-                            {...register(`test.${index}.Rating`, {
-                              required: false,
-                            })}
-                            name={`test.${index}.Rating`}
-                            placeholder="Price"
-                            type={"number"}
-                            className={defaultInputSmStyle + " text-right"}
-
-                          />
-                        ) : (
-                          <span className="pr-3">
-                            <NumberFormat
+                        {!isExporting && (
+                          <span className="sm:hidden w-1/2 flex flex-row items-center">
+                            Price
+                          </span>
+                        )}
+                        <span
+                          className={
+                            isExporting
+                              ? "inline-block w-full mb-0"
+                              : "inline-block w-1/2 sm:w-full mb-1 sm:mb-0"
+                          }
+                        >
+                          {!isViewMode ? (
+                            <input
+                              autoComplete="nope"
                               // value={product.amount}
-                              className=""
-                              displayType={"text"}
-                              thousandSeparator={true}
-                              renderText={(value, props) => (
-                                <span {...props}>{value}</span>
-                              )}
+                              {...register(`test.${index}.Rating`, {
+                                required: false,
+                              })}
+                              name={`test.${index}.Rating`}
+                              placeholder="Price"
+                              type={"number"}
+                              className={defaultInputSmStyle + " text-right"}
                             />
-                          </span>
-                        )}
-                      </span>
-                    </div>
-                    <div
-                      className={
-                        isExporting
-                          ? "font-title w-1/4 text-right pr-8 flex flex-row block"
-                          : "font-title w-full sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block"
-                      }
-                    >
-                      {!isExporting && (
-                        <span className="sm:hidden w-1/2 flex flex-row items-center">
-                          Quantity
+                          ) : (
+                            <span className="pr-3">
+                              <NumberFormat
+                                // value={product.amount}
+                                className=""
+                                displayType={"text"}
+                                thousandSeparator={true}
+                                renderText={(value, props) => (
+                                  <span {...props}>{value}</span>
+                                )}
+                              />
+                            </span>
+                          )}
                         </span>
-                      )}
-                      <span
+                      </div>
+                      <div
                         className={
                           isExporting
-                            ? "inline-block w-full mb-0"
-                            : "inline-block w-1/2 sm:w-full mb-1 sm:mb-0"
+                            ? "font-title w-1/4 text-right pr-8 flex flex-row block"
+                            : "font-title w-full sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block"
                         }
                       >
-                        {!isViewMode ? (
-                          <input
-                            autoComplete="nope"
-                            // value={product.quantity}
-                            type={"number"}
-                            placeholder="Quantity"
-                            className={defaultInputSmStyle + " text-right"}
-                            {...register(`test.${index}.qty`, {
-                              required: false,
-                              pattern: {
-                                value: /^[1-9]\d*(\d+)?$/i,
-                                message: "Please enter an integer",
-                              },
-                            })}
-                            name={`test.${index}.qty`}
-                          />
-                        ) : (
-                          <span className="pr-3">
-                            <NumberFormat
-                              // value={product.quantity}
-                              className=""
-                              displayType={"text"}
-                              thousandSeparator={true}
-                              renderText={(value, props) => (
-                                <span {...props}>{value}</span>
-                              )}
-                            />
+                        {!isExporting && (
+                          <span className="sm:hidden w-1/2 flex flex-row items-center">
+                            Quantity
                           </span>
                         )}
-                      </span>
-                    </div>
-                    <div
-                      className={
-                        isExporting
-                          ? "font-title w-1/4 text-right pr-9 flex flex-row `1block"
-                          : "font-title w-full sm:w-1/4 text-right sm:pr-9 flex flex-row sm:block"
-                      }
-                    >
-                      {/* {!isExporting && (
+                        <span
+                          className={
+                            isExporting
+                              ? "inline-block w-full mb-0"
+                              : "inline-block w-1/2 sm:w-full mb-1 sm:mb-0"
+                          }
+                        >
+                          {!isViewMode ? (
+                            <input
+                              autoComplete="nope"
+                              // value={product.quantity}
+                              type={"number"}
+                              placeholder="Quantity"
+                              className={defaultInputSmStyle + " text-right"}
+                              {...register(`test.${index}.qty`, {
+                                required: false,
+                                pattern: {
+                                  value: /^[1-9]\d*(\d+)?$/i,
+                                  message: "Please enter an integer",
+                                },
+                              })}
+                              name={`test.${index}.qty`}
+                            />
+                          ) : (
+                            <span className="pr-3">
+                              <NumberFormat
+                                // value={product.quantity}
+                                className=""
+                                displayType={"text"}
+                                thousandSeparator={true}
+                                renderText={(value, props) => (
+                                  <span {...props}>{value}</span>
+                                )}
+                              />
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                      <div
+                        className={
+                          isExporting
+                            ? "font-title w-1/4 text-right pr-9 flex flex-row `1block"
+                            : "font-title w-full sm:w-1/4 text-right sm:pr-9 flex flex-row sm:block"
+                        }
+                      >
+                        {/* {!isExporting && (
                         <span className="sm:hidden w-1/2 flex flex-row items-center"
                         >
                           Total
@@ -1121,70 +1085,69 @@ function InvoiceDetailScreen(props) {
                         //   <span {...props}>{value}</span>
                         // )}
                         /> */}
-                      {/* {invoiceForm?.currencyUnit} */}
-                      {/* </span> */}
-                      <span
-                        className={
-                          isExporting
-                            ? "inline-block w-full mb-0"
-                            : "inline-block w-1/2 sm:w-full mb-1 sm:mb-0"
-                        }
-                      >
-                        {!isViewMode ? (
-                          <input
-                            autoComplete="nope"
-                            // value={product.quantity}
-                            placeholder="Total"
-                            className={defaultInputSmStyle + " text-right"}
-                            name={`test.${index}.Amount`}
-                            {...register(`test.${index}.Amount`)}
-                            value={getValues().test[index].Amount}
-                          />
-                        ) : (
-                          <span className="pr-3">
-                          </span>
-                        )}
-                      </span>
-                    </div>
-                    {!isViewMode && (
-                      <div
-                        className="w-full sm:w-10 sm:absolute sm:right-0"
-
-                      >
-                        <div className="w-full text-red-500 font-title h-8 sm:h-8 sm:w-8 cursor-pointer rounded-2xl bg-red-200 mr-2 flex justify-center items-center">
-                          <DeleteIcon className="h-4 w-4" style={IconStyle} onClick={() => remove(index)} />
-                          <span className="block sm:hidden">Delete Product</span>
-                        </div>
+                        {/* {invoiceForm?.currencyUnit} */}
+                        {/* </span> */}
+                        <span
+                          className={
+                            isExporting
+                              ? "inline-block w-full mb-0"
+                              : "inline-block w-1/2 sm:w-full mb-1 sm:mb-0"
+                          }
+                        >
+                          {!isViewMode ? (
+                            <input
+                              autoComplete="nope"
+                              // value={product.quantity}
+                              placeholder="Total"
+                              className={defaultInputSmStyle + " text-right"}
+                              name={`test.${index}.Amount`}
+                              {...register(`test.${index}.Amount`)}
+                              value={getValues().test[index].Amount}
+                            />
+                          ) : (
+                            <span className="pr-3"></span>
+                          )}
+                        </span>
                       </div>
-                    )}
-                  </div>
-                );
-              }
-              )}
-            </>) : (<>
-            </>)}
-
-
+                      {!isViewMode && (
+                        <div className="w-full sm:w-10 sm:absolute sm:right-0">
+                          <div className="w-full text-red-500 font-title h-8 sm:h-8 sm:w-8 cursor-pointer rounded-2xl bg-red-200 mr-2 flex justify-center items-center">
+                            <DeleteIcon
+                              className="h-4 w-4"
+                              style={IconStyle}
+                              onClick={() => remove(index)}
+                            />
+                            <span className="block sm:hidden">
+                              Delete Product
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </>
+            ) : (
+              <></>
+            )}
 
             {/* Add Product Actions */}
-            {
-              !isViewMode && (
-                <div className="flex flex-col sm:flex-row rounded-lg sm:visible w-full px-4 py-2 items-center sm:justify-end">
-                  <div className="font-title w-full sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block mb-1">
-                    <Button size="sm" block={1} onClick={handleappendupdate}  >
-                      <PlusCircleIcon style={IconStyle} className="h-5 w-5" />
-                      Add Empty Product
-                    </Button>
-                  </div>
-                  <div className="font-title w-full sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block mb-1">
-                    <Button size="sm" block={1} onClick={openChooseProduct}>
-                      <InvoiceIcon style={IconStyle} className="w-5 h-5" />
-                      Add Exisiting Product
-                    </Button>
-                  </div>
+            {!isViewMode && (
+              <div className="flex flex-col sm:flex-row rounded-lg sm:visible w-full px-4 py-2 items-center sm:justify-end">
+                <div className="font-title w-full sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block mb-1">
+                  <Button size="sm" block={1} onClick={handleappendupdate}>
+                    <PlusCircleIcon style={IconStyle} className="h-5 w-5" />
+                    Add Empty Product
+                  </Button>
                 </div>
-              )
-            }
+                <div className="font-title w-full sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block mb-1">
+                  <Button size="sm" block={1} onClick={openChooseProduct}>
+                    <InvoiceIcon style={IconStyle} className="w-5 h-5" />
+                    Add Exisiting Product
+                  </Button>
+                </div>
+              </div>
+            )}
             {/* Add Product Actions Finished*/}
 
             {/* Subtotal Start */}
@@ -1201,7 +1164,6 @@ function InvoiceDetailScreen(props) {
                     ? "font-title w-1/4 text-right pr-9 flex flex-row block justify-end text-sm "
                     : "font-title w-1/2 sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block mb-1 sm:mb-0"
                 }
-
               >
                 Subtotal
               </div>
@@ -1229,7 +1191,6 @@ function InvoiceDetailScreen(props) {
                   : "flex flex-row sm:flex-row sm:justify-end rounded-lg sm:visible w-full px-4 py-1 items-center "
               }
             >
-
               <div
                 className={
                   isExporting
@@ -1275,7 +1236,6 @@ function InvoiceDetailScreen(props) {
                     ? "font-title w-1/4 text-right pr-9 flex flex-row block justify-end text-sm "
                     : "font-title w-1/2 sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block mb-1 sm:mb-0"
                 }
-
               >
                 <input
                   className={defaultInputSmStyle + " text-right"}
@@ -1315,7 +1275,6 @@ function InvoiceDetailScreen(props) {
                     ? "font-title w-1/4 text-right pr-9 flex flex-row block justify-end text-sm "
                     : "font-title w-1/2 sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block mb-1 sm:mb-0"
                 }
-
               >
                 <input
                   className={defaultInputSmStyle + " text-right"}
@@ -1341,7 +1300,6 @@ function InvoiceDetailScreen(props) {
             </div>
             {/* shipping finished*/}
 
-
             {/*  Amount Paid */}
             <div
               className={
@@ -1356,7 +1314,6 @@ function InvoiceDetailScreen(props) {
                     ? "font-title w-1/4 text-right pr-9 flex flex-row block justify-end text-sm "
                     : "font-title w-1/2 sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block mb-1 sm:mb-0"
                 }
-
               >
                 <input
                   className={defaultInputSmStyle + " text-right"}
@@ -1397,14 +1354,12 @@ function InvoiceDetailScreen(props) {
                     : "font-title w-1/2 sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block mb-1 sm:mb-0"
                 }
               >
-
                 <input
                   className={defaultInputSmStyle + " text-right"}
                   // value={" Balance Due"}
                   {...register("balance")}
                   onChange={(e) => setBalance(e.target.value)}
                 />
-
               </div>
               <div
                 className={
@@ -1424,9 +1379,6 @@ function InvoiceDetailScreen(props) {
               </div>
             </div>
             {/*  Balance Due finished*/}
-
-
-
 
             {/* Subtotal Start */}
             <div
@@ -1459,10 +1411,8 @@ function InvoiceDetailScreen(props) {
                       ? "font-title text-lg w-1/2 text-right pr-9 flex flex-row block  justify-end items-center"
                       : "font-title text-lg w-1/2 text-right sm:pr-9 flex flex-row justify-end sm:block items-center"
                   }
-
                 >
                   <NumberFormat
-
                     className=""
                     displayType={"text"}
                     thousandSeparator={true}
@@ -1476,15 +1426,13 @@ function InvoiceDetailScreen(props) {
           </div>
           {/* Products Finished */}
         </div>
-      )
-      }
+      )}
 
-      {
-        invoiceForm && invoiceForm?.statusIndex !== "3" && (
-          <div className="px-4 pt-3">
-            <div className="bg-white rounded-xl px-3 py-3">
-              <div className="flex flex-col flex-wrap sm:flex-row justify-end">
-                {/* {params.id === "new" && (
+      {invoiceForm && invoiceForm?.statusIndex !== "3" && (
+        <div className="px-4 pt-3">
+          <div className="bg-white rounded-xl px-3 py-3">
+            <div className="flex flex-col flex-wrap sm:flex-row justify-end">
+              {/* {params.id === "new" && (
                 <div className="w-full flex-1 my-1 sm:my-1 md:my-0 px-1">
                   <Button
                     outlined={1}
@@ -1511,23 +1459,22 @@ function InvoiceDetailScreen(props) {
                   </Button>
                 </div>
               )} */}
-                <div className="w-1/2   my-1 sm:my-1 md:my-0 px-1  " >
-                  <Button
-                    size="sm"
-                    block={1}
-                    success={1}
-                    type="submit"
+              <div className="w-1/2   my-1 sm:my-1 md:my-0 px-1  ">
+                <Button
+                  size="sm"
+                  block={1}
+                  success={1}
+                  type="submit"
                   // onClick={(e) => { saveInvoiceDetail(e) }}
-                  >
-                    <SecurityIcon className="h-5 w-5 mr-1" />{" "}
-                    {params.id === "new" ? "Save" : "Update"} As Paid
-                  </Button>
-                </div>
+                >
+                  <SecurityIcon className="h-5 w-5 mr-1" />{" "}
+                  {params.id === "new" ? "Save" : "Update"} As Paid
+                </Button>
               </div>
             </div>
           </div>
-        )
-      }
+        </div>
+      )}
       {/* 
       {invoiceForm && (
         <div className="p-4">
@@ -1541,7 +1488,7 @@ function InvoiceDetailScreen(props) {
           />
         </div>
       )} */}
-    </form >
+    </form>
   );
 }
 

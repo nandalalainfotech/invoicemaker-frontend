@@ -99,11 +99,12 @@ function Sidebar() {
             }}
           >
             { }
-            <span className="nav-loading">
+            <img src="logo_nanda.png" className="ml-10 w-28" />
+            {/* <span className="nav-loading">
               <InvoiceNavbarLoading loop />
             </span>
 
-            Invoice Maker
+            Invoice Makerssss */}
           </motion.span>
         </div>
 

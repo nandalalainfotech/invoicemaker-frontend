@@ -4,9 +4,7 @@ import Axios from "axios";
 export const deleteInvoice = createAsyncThunk(
     'invoice/deleteinvoice',
     async (id) => {
-        console.log("register-------->", id);
         const request = await Axios.delete(`/api/invoices/deleteInvoice/${id}`);
-        console.log('request====>', request)
         const response = await request.data;
         return response
     }
@@ -26,7 +24,6 @@ export const deleteSlice = createSlice({
             state.error = null;
         })
             .addCase(deleteInvoice.fulfilled, (state, action) => {
-                console.log("action-------->", action)
                 state.loading = false;
                 state.success = true;
                 state.id = action.payload;

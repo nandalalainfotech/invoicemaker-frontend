@@ -18,7 +18,6 @@ function DashboardWidgets() {
   const totalBalance = useSelector(getTotalBalance);
   const allInvoices = useSelector(getAllInvoiceSelector);
 
-  console.log("allInvoices--->", allInvoices);
 
   return (
     <>
