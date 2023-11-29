@@ -3,14 +3,14 @@ import { motion } from "framer-motion";
 import { useAppContext } from "../../context/AppContext";
 import InvoiceNavbarLoading from "../Loading/InvoiceNavbarLoading";
 import Button from "../../components/Button/Button";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { removeItem } from "localforage";
 
 function Navbar() {
   const { toggleNavbar, showNavbar } = useAppContext();
   const navigate = useNavigate();
-
+  const location = useLocation();
   const classes = useMemo(() => {
     const defaultClasses =
       "bg-white flex items-center pr-3 z-12 fixed w-full z-10 border-b border-slate-50 transition-all";
@@ -20,7 +20,6 @@ function Navbar() {
     }
     return defaultClasses + " pl-72 ";
   }, [showNavbar]);
-
 
   const logoutclass = useMemo(() => {
     const defaultClasses =
@@ -127,12 +126,14 @@ function Navbar() {
           </>
         ) : (
           <>
-            <div className="font-title w-full sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block mb-1">
-              <Button size="sm" block={1} onClick={singIn}>
-                {/* <PlusCircleIcon style={IconStyle} className="h-5 w-5" /> */}
-                Sign In
-              </Button>
-            </div>
+            {location.pathname !== "/login" && (
+              <div className="font-title w-full sm:w-1/4 text-right sm:pr-8 flex flex-row sm:block mb-1">
+                <Button size="sm" block={1} onClick={singIn}>
+                  {/* <PlusCircleIcon style={IconStyle} className="h-5 w-5" /> */}
+                  Sign In
+                </Button>
+              </div>
+            )}
           </>
         )}
       </header>

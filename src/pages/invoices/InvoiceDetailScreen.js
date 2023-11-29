@@ -139,6 +139,7 @@ function InvoiceDetailScreen(props) {
   const [mobileNo, setmobileNo] = useState(item1?.MobileNo);
   const [creationDate, setCreationDate] = useState(item1?.createdDate);
   const [dueDate, setDueDate] = useState(item1?.Duedate);
+  const [tAmount, settAmount] = useState(false);
 
   useEffect(() => {
     setTax(item1?.Tax);
@@ -283,6 +284,7 @@ function InvoiceDetailScreen(props) {
   };
 
   const handleChange = () => {
+    settAmount(true)
     let subamount = 0;
     const arr = getValues().test.map((item) => {
       // console.log("item-------arrrrrrrrrrrr-----", item);
@@ -404,7 +406,28 @@ function InvoiceDetailScreen(props) {
           Swal.fire("Invoice Details Saved Successfully");
           // navigate('/')
           dispatch(userList());
-          window.location.reload(true);
+          // window.location.reload(true);
+          document.getElementById("create-course-form").reset();
+
+          // setCompanyName("")
+          setDueDate("");
+          setCreationDate("");
+          // setmobileNo("")
+          // setEmail("")
+          // setAddCompany("")
+          // setAddCompany("")
+          setBalance("");
+          setAmount("");
+          setBalanceDue("");
+          setShipping("");
+          setDiscount("");
+          setTotal("");
+          setSubTotals("");
+          setTax("");
+          setIsExporting("");
+          setIsViewMode("");
+          settAmount(false)
+          // setInvoiceForm("")
         }
       });
     }
@@ -588,7 +611,7 @@ function InvoiceDetailScreen(props) {
   // console.log("ite1--------------->", item1);
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
+    <form id="create-course-form" onSubmit={handleSubmit(onSubmit)}>
       <div className="p-4">
         <PageTitle
           title={
@@ -1102,7 +1125,8 @@ function InvoiceDetailScreen(props) {
                               className={defaultInputSmStyle + " text-right"}
                               name={`test.${index}.Amount`}
                               {...register(`test.${index}.Amount`)}
-                              value={getValues().test[index].Amount}
+                              value={tAmount ? getValues().test[index].Amount : ""}
+                             
                             />
                           ) : (
                             <span className="pr-3"></span>

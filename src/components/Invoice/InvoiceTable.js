@@ -8,9 +8,10 @@ import {
   defaultTdContent,
   defaultTdContentTitleStyle,
   defaultSearchStyle,
+  defaultTdpdfStyle,
 } from "../../constants/defaultStyles";
 import ReactPaginate from "react-paginate";
-import { getAllInvoiceSelector, } from "../../store/invoiceSlice";
+import { getAllInvoiceSelector } from "../../store/invoiceSlice";
 import { useNavigate } from "react-router-dom";
 import NumberFormat from "react-number-format";
 import InvoiceIcon from "../Icons/InvoiceIcon";
@@ -21,6 +22,8 @@ import invoiceListSlice, { userList } from "../../store/invoiceListSlice";
 import { deleteInvoice } from "../../store/deleteSlice";
 import { editInvoice } from "../../store/invoiceEditSlice";
 import { updateInvoice } from "../../store/invoiceUpdateSlice";
+import fileDownload from "js-file-download";
+// import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 
 // Example items, to simulate fetching from another resources.
 const itemsPerPage = 10;
@@ -39,12 +42,10 @@ function InvoiceTable({ showAdvanceSearch = false }) {
   const [pageCount, setPageCount] = useState(0);
   const [itemOffset, setItemOffset] = useState(0);
 
+  const { user } = useSelector((state) => state.user);
+  let userDetail = sessionStorage.getItem("user", JSON.stringify("user"));
 
-  const { user } = useSelector(state => state.user)
-  let userDetail = sessionStorage.getItem('user', JSON.stringify("user"));
-
-
-  const invoDetail = JSON.parse(userDetail)
+  const invoDetail = JSON.parse(userDetail);
   const invoices = useMemo(() => {
     let filterData = allInvoices.length > 0 ? [...allInvoices].reverse() : [];
     if (searchForm.invoiceNo?.trim()) {
@@ -77,8 +78,8 @@ function InvoiceTable({ showAdvanceSearch = false }) {
 
   const handleEdit = useCallback(
     (item1) => {
-      dispatch(editInvoice(item1._id))
-      dispatch(updateInvoice(item1))
+      dispatch(editInvoice(item1._id));
+      dispatch(updateInvoice(item1));
       navigate("/invoices/" + item1._id);
     },
     [navigate, dispatch]
@@ -94,13 +95,12 @@ function InvoiceTable({ showAdvanceSearch = false }) {
     setItemOffset(0);
   }, []);
 
-  currentItems.push("getInvoicedetail")
+  currentItems.push("getInvoicedetail");
   useEffect(() => {
     // Fetch items from another resources.
     const endOffset = itemOffset + itemsPerPage;
     setCurrentItems(invoices.slice(itemOffset, endOffset));
     setPageCount(Math.ceil(invoices.length / itemsPerPage));
-
   }, [invoices, itemOffset]);
 
   // const getData = async () => {
@@ -108,30 +108,37 @@ function InvoiceTable({ showAdvanceSearch = false }) {
   //   setDetailInvoice(response.data)
   // }
 
-
   const handleDelete = useCallback(
     (id) => {
-      dispatch(deleteInvoice(id._id))
+      dispatch(deleteInvoice(id._id));
       window.location.reload(true);
     },
     [dispatch]
-  )
+  );
   // setItems((prevItem) => prevItem.filter((item) => item.id !== id));
 
-  const invoicelist = useSelector((state) => state.userList)
-  const invoiceDetailList = invoicelist.userdetailList
-
-
+  const invoicelist = useSelector((state) => state.userList);
+  const invoiceDetailList = invoicelist.userdetailList;
 
   // const deletedID = useSelector((state) => state?.deleteSlice)
   // const { error, id, loading, success } = deletedID;
 
-
   useEffect(() => {
-    dispatch(userList())
+    dispatch(userList());
   }, [dispatch]);
-
-
+  const exportPdf = (params) => {
+    Axios.get(`/api/invoices/downloaduser/${params._id}`, {
+      responseType: "blob",
+      headers: {
+        "Content-Type": "application/pdf",
+      },
+    }).then((res) => {
+      const link = document.createElement("a");
+      fileDownload(res.data, "InvoiceSearchExport.pdf");
+      link.download = "output.pdf";
+      link.click();
+    });
+  };
 
   return (
     <>
@@ -192,6 +199,9 @@ function InvoiceTable({ showAdvanceSearch = false }) {
           <div className="sm:text-left text-default-color font-title flex-1">
             Amount
           </div>
+          <div className="sm:text-left text-default-color font-title flex-1">
+            Pdf download
+          </div>
           <div className="sm:text-left text-default-color font-title sm:w-11">
             Action
           </div>
@@ -200,9 +210,10 @@ function InvoiceTable({ showAdvanceSearch = false }) {
         <div>
           {invoiceDetailList
             ?.filter((item) => {
-              return item?.userid === invoDetail.id
-            })?.map((item1) => (
-              < div className={defaultTdWrapperStyle} key={item1?.id}>
+              return item?.userid === invoDetail.id;
+            })
+            ?.map((item1) => (
+              <div className={defaultTdWrapperStyle} key={item1?.id}>
                 <div className={defaultTdStyle}>
                   <div className={defaultTdContentTitleStyle}>Invoice Name</div>
                   <div className={defaultTdContent}>
@@ -233,8 +244,8 @@ function InvoiceTable({ showAdvanceSearch = false }) {
                         (item1?.statusIndex === "2"
                           ? "bg-red-100 text-red-400"
                           : item1.statusIndex === "3"
-                            ? "bg-green-200 text-green-600"
-                            : "bg-gray-100 text-gray-600 ")
+                          ? "bg-green-200 text-green-600"
+                          : "bg-gray-100 text-gray-600 ")
                       }
                     >
                       {item1?.clientMobileNo}
@@ -257,6 +268,25 @@ function InvoiceTable({ showAdvanceSearch = false }) {
                       />
                       {item1?.subTotal}
                     </span>
+                  </div>
+                </div>
+
+                <div className={defaultTdStyle}>
+                  <div className={defaultTdContentTitleStyle}>Pdf download</div>
+                  <div className={defaultTdpdfStyle}>
+                    <svg
+                      onClick={() => exportPdf(item1)}
+                      // onClick={() => exportPdf()}
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      fill="currentColor"
+                      class="bi bi-download"
+                      viewBox="0 0 16 16"
+                    >
+                      <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5" />
+                      <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z" />
+                    </svg>
                   </div>
                 </div>
 
@@ -320,7 +350,7 @@ function InvoiceTable({ showAdvanceSearch = false }) {
             />
           )}
         </div>
-      </div >
+      </div>
     </>
   );
 }
