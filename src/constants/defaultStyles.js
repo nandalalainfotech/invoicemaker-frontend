@@ -32,5 +32,5 @@ export const defaultTdContent =
   "sm:w-full w-1/2 flex flex-wrap flex-row items-center";
 export const defaultTdContentTitleStyle =
   "sm:hidden w-1/2 flex flex-row items-center";
-
+export const defaultTdpdfStyle = 'items-center'
 export const IconStyle = { top: -2, position: "relative", marginRight: 2 };

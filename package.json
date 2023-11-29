@@ -4,6 +4,7 @@
    "version": "0.1.0",
    "private": true,
    "dependencies": {
+      "@mui/icons-material": "^5.14.18",
       "@reduxjs/toolkit": "^1.8.1",
       "@szhsin/react-menu": "^3.0.2",
       "@testing-library/jest-dom": "^5.14.1",
