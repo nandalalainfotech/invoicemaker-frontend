@@ -42,7 +42,7 @@ function QuickAddClient({ editForm }) {
 
   const [isTouched, setIsTouched] = useState(false);
   const [clientForm, setClientForm] = useState(emptyForm);
-    const [validForm, setValidForm] = useState(
+  const [validForm, setValidForm] = useState(
     Object.keys(emptyForm).reduce((a, b) => {
       return { ...a, [b]: false };
     }, {})
@@ -59,9 +59,9 @@ function QuickAddClient({ editForm }) {
   const handlerClientValue = useCallback(
     (event, keyName) => {
       const value = event.target.value;
-      
+
       setClientForm((prev) => {
-                return { ...prev, [keyName]: value };
+        return { ...prev, [keyName]: value };
       });
 
       dispatch(updateNewClientFormField({ key: keyName, value }));
@@ -69,26 +69,31 @@ function QuickAddClient({ editForm }) {
     [dispatch]
   );
 
- 
+  // const { user } = useSelector(state => state.user)
+  let userDetail = sessionStorage.getItem("user");
+  let userId = JSON.parse(userDetail);
+
   const submitHandler = useCallback((e) => {
     setIsTouched(true);
 
     e.preventDefault();
- 
+
 
     const clientDetail = {
       clientName: clientForm.name,
       clientAddress: clientForm.billingAddress,
       clientEmail: clientForm.email,
       clientMobileNo: clientForm.mobileNo,
+      userid: userId.id,
     }
+    console.log("clientDetail--->", clientDetail)
 
     dispatch(ClientUser(clientDetail)).then((result) => {
       if (result.payload) {
         Swal.fire('Invoice Details Saved Successfully');
         // navigate('/')
       }
-     
+
     })
     setClientForm(clientNewForm);
     // const isValid = Object.keys(validForm).every((key) => validForm[key]);

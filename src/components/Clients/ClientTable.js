@@ -38,6 +38,7 @@ function ClientTable({ showAdvanceSearch = false }) {
   const [pageCount, setPageCount] = useState(0);
   const [itemOffset, setItemOffset] = useState(0);
   const [users, setUser] = useState([]);
+  console.log("users------>", users)
   const [editID, setEditID] = useState([])
 
   const clients = useMemo(() => {
@@ -101,10 +102,10 @@ function ClientTable({ showAdvanceSearch = false }) {
   useEffect(() => {
     setUser(detailsClient)
   }, [detailsClient])
-  
+
   useEffect(() => {
     dispatch(getClientDetails());
-  
+
 
   }, []);
 
@@ -206,11 +207,14 @@ function ClientTable({ showAdvanceSearch = false }) {
             Action
           </div>
         </div>
-
+        {/* ?.filter((item) => {
+              return item?.userid === invoDetail.id;
+            }) */}
         <div>
           {users &&
-          
+
             users.map((client) => (
+
               <div className={defaultTdWrapperStyle} key={client._id}>
                 <div className={defaultTdStyle}>
                   <div className={defaultTdContentTitleStyle}>Name</div>
