@@ -689,7 +689,7 @@ function InvoiceDetailScreen(props) {
                   value={companyName ? companyName : ""}
                 />
                 <input
-                  placeholder="Plz add First Company Data"
+                  placeholder="Company Address"
                   className={InputSmStyle + "text-sm font-medium "}
                   style={{ marginBottom: "5px" }}
                   onChange={(e) => setAddCompany(e.target.value)}
@@ -704,7 +704,7 @@ function InvoiceDetailScreen(props) {
                 />
                 <input
                   autoComplete="nope"
-                  placeholder=" Company@email.com"
+                  placeholder=" Company Email"
                   className={InputSmStyle + "text-sm font-medium"}
                   onChange={(e) => setEmail(e.target.value)}
                   value={email ? email : ""}
@@ -867,7 +867,7 @@ function InvoiceDetailScreen(props) {
                   <div className="font-title flex-1 text-right">
                     <input
                       autoComplete="nope"
-                      placeholder="Invoice No"
+                      placeholder="Curreny"
                       {...register("changeCurrency")}
                       className={defaultInputSmStyle + " text-right"}
                       // value={invoiceForm.currencyUnit}
@@ -1237,7 +1237,7 @@ function InvoiceDetailScreen(props) {
                 <input
                   autoComplete="nope"
                   type={"number"}
-                  placeholder="discount"
+                  placeholder="Discount"
                   className={defaultInputSmStyle + " text-right"}
                   onChange={(e) => handleDiscountValue(e)}
                   value={discount ? discount : ""}
@@ -1276,7 +1276,7 @@ function InvoiceDetailScreen(props) {
                 <input
                   autoComplete="nope"
                   type={"number"}
-                  placeholder="Percentage"
+                  placeholder="In Percentage"
                   className={defaultInputSmStyle + " text-right"}
                   onChange={(e) => handleTaxValue(e)}
                   value={tax ? tax : ""}
@@ -1315,7 +1315,7 @@ function InvoiceDetailScreen(props) {
                 <input
                   autoComplete="nope"
                   type={"number"}
-                  placeholder="Percentage"
+                  placeholder="In Percentage"
                   className={defaultInputSmStyle + " text-right"}
                   onChange={(e) => handleShipping(e)}
                   value={shipping ? shipping : ""}
@@ -1354,7 +1354,7 @@ function InvoiceDetailScreen(props) {
                 <input
                   autoComplete="nope"
                   type={"number"}
-                  placeholder="Percentage"
+                  placeholder="In Percentage"
                   className={defaultInputSmStyle + " text-right"}
                   onChange={(e) => handlePaidAmount(e)}
                   value={amount ? amount : ""}
@@ -1379,6 +1379,7 @@ function InvoiceDetailScreen(props) {
                 }
               >
                 <input
+                 placeholder="Balance"
                   className={defaultInputSmStyle + " text-right"}
                   // value={" Balance Due"}
                   {...register("balance")}
@@ -1395,7 +1396,7 @@ function InvoiceDetailScreen(props) {
                 <input
                   autoComplete="nope"
                   type={"number"}
-                  placeholder="Percentage"
+                 placeholder="Balance"
                   className={defaultInputSmStyle + " text-right"}
                   onChange={(e) => setBalanceDue(e.target.value)}
                   value={balanceDue ? balanceDue : ""}
